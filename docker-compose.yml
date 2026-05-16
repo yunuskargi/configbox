@@ -1,0 +1,25 @@
+services:
+  backend:
+    build: ./backend
+    container_name: confbox-backend
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./backups:/data/backups
+      - db-data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:////app/data/confbox.db
+      - BACKUP_DIR=/data/backups
+      - TZ=Europe/Istanbul
+
+  frontend:
+    build: ./frontend
+    container_name: confbox-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  db-data:
