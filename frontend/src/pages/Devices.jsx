@@ -1,26 +1,27 @@
 import { useEffect, useState, useRef } from 'react';
 import api from '../api/client';
+import { useLang } from '../context/LangContext';
 import { Plus, Play, Pencil, Trash2, Wifi, Clock, X, MapPin, Upload, Download, FileSpreadsheet, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 const vendorDefaults = { fortigate: { port: 443 }, juniper: { port: 22 }, cisco: { port: 22 }, paloalto: { port: 443 } };
 const ciscoPlatforms = { ios: 'IOS / IOS-XE', nxos: 'NX-OS (Nexus)', asa: 'ASA (Firewall)' };
-const weekdays = { 0: 'Pazar', 1: 'Pazartesi', 2: 'Salı', 3: 'Çarşamba', 4: 'Perşembe', 5: 'Cuma', 6: 'Cumartesi' };
 
-function formatCron(cron) {
+function formatCron(cron, t) {
   if (!cron) return null;
   const parts = cron.split(' ');
   if (parts.length !== 5) return cron;
   const [min, hr, , , dow] = parts;
-  if (min === '*/15' && hr === '*') return '15 dk\'da bir';
-  if (min === '0' && hr === '*') return 'Saatte bir';
-  if (min === '0' && hr === '*/3') return '3 saatte bir';
-  if (min === '0' && hr === '*/6') return '6 saatte bir';
+  if (min === '*/15' && hr === '*') return t.dev_schedule_every15;
+  if (min === '0' && hr === '*') return t.dev_schedule_hourly;
+  if (min === '0' && hr === '*/3') return t.dev_schedule_every3h;
+  if (min === '0' && hr === '*/6') return t.dev_schedule_every6h;
+  const weekdays = { 0: t.weekday_0, 1: t.weekday_1, 2: t.weekday_2, 3: t.weekday_3, 4: t.weekday_4, 5: t.weekday_5, 6: t.weekday_6 };
   const time = `${hr.padStart(2, '0')}:${min.padStart(2, '0')}`;
   if (dow !== '*') return `${weekdays[dow] || dow} ${time}`;
-  return `Her gün ${time}`;
+  return `${t.dev_schedule_daily} ${time}`;
 }
 
-function DeviceModal({ device, onClose, onSaved }) {
+function DeviceModal({ device, onClose, onSaved, t }) {
   const isEdit = !!device?.id;
   const [form, setForm] = useState(() => {
     if (device) {
@@ -92,7 +93,7 @@ function DeviceModal({ device, onClose, onSaved }) {
       }
       onSaved();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Bir hata oluştu');
+      setError(err.response?.data?.detail || t.error_occurred);
     } finally {
       setSaving(false);
     }
@@ -102,7 +103,7 @@ function DeviceModal({ device, onClose, onSaved }) {
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-800">{isEdit ? 'Cihaz Düzenle' : 'Yeni Cihaz Ekle'}</h2>
+          <h2 className="text-lg font-semibold text-gray-800">{isEdit ? t.dev_edit : t.dev_new}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
 
@@ -111,11 +112,11 @@ function DeviceModal({ device, onClose, onSaved }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Cihaz Adı</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_name}</label>
               <input value={form.name} onChange={(e) => set('name', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vendor</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_vendor}</label>
               <select value={form.vendor} onChange={(e) => handleVendorChange(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" disabled={isEdit}>
                 <option value="fortigate">FortiGate</option>
                 <option value="juniper">Juniper</option>
@@ -127,19 +128,19 @@ function DeviceModal({ device, onClose, onSaved }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">IP Adresi</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_ip}</label>
               <input value={form.ip_address} onChange={(e) => set('ip_address', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Port</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_port}</label>
               <input type="number" value={form.port} onChange={(e) => set('port', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" required />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Lokasyon</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_location}</label>
             <select value={form.location_id || ''} onChange={(e) => set('location_id', e.target.value ? Number(e.target.value) : null)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
-              <option value="">Lokasyon seçin (opsiyonel)</option>
+              <option value="">{t.dev_no_location} ({t.optional})</option>
               {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
             </select>
           </div>
@@ -147,14 +148,13 @@ function DeviceModal({ device, onClose, onSaved }) {
           {(form.vendor === 'fortigate' || form.vendor === 'paloalto') && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">API Token</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_api_token}</label>
                 <input value={form.auth_token || ''} onChange={(e) => { set('auth_token', e.target.value); setTokenTouched(true); }} onFocus={() => { if (!tokenTouched && form.auth_token === '********') { set('auth_token', ''); setTokenTouched(true); } }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder={form.vendor === 'paloalto' ? 'PAN-OS XML API key' : 'FortiGate REST API token'} />
               </div>
               {form.vendor === 'fortigate' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">VDOM</label>
-                <input value={form.vdom || ''} onChange={(e) => set('vdom', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="Boş bırakılırsa global config alınır" />
-                <p className="text-xs text-gray-400 mt-1">Belirli bir VDOM yedeklemek için adını girin (örn: root, vdom1)</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_vdom}</label>
+                <input value={form.vdom || ''} onChange={(e) => set('vdom', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder={t.optional} />
               </div>
               )}
             </>
@@ -164,26 +164,25 @@ function DeviceModal({ device, onClose, onSaved }) {
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">SSH Kullanıcı</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_ssh_username}</label>
                   <input value={form.ssh_username || ''} onChange={(e) => set('ssh_username', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">SSH Şifre</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_ssh_password}</label>
                   <input type="password" value={form.ssh_password || ''} onChange={(e) => { set('ssh_password', e.target.value); setSshPassTouched(true); }} onFocus={() => { if (!sshPassTouched && form.ssh_password === '********') { set('ssh_password', ''); setSshPassTouched(true); } }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" />
                 </div>
               </div>
               {form.vendor === 'cisco' && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_platform}</label>
                     <select value={form.platform || 'ios'} onChange={(e) => set('platform', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
                       {Object.entries(ciscoPlatforms).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Enable Şifre</label>
-                    <input type="password" value={form.enable_password || ''} onChange={(e) => { set('enable_password', e.target.value); setEnablePassTouched(true); }} onFocus={() => { if (!enablePassTouched && form.enable_password === '********') { set('enable_password', ''); setEnablePassTouched(true); } }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="Opsiyonel" />
-                    <p className="text-xs text-gray-400 mt-1">Login şifresinden farklıysa girin</p>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_enable_password}</label>
+                    <input type="password" value={form.enable_password || ''} onChange={(e) => { set('enable_password', e.target.value); setEnablePassTouched(true); }} onFocus={() => { if (!enablePassTouched && form.enable_password === '********') { set('enable_password', ''); setEnablePassTouched(true); } }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder={t.optional} />
                   </div>
                 </div>
               )}
@@ -191,32 +190,32 @@ function DeviceModal({ device, onClose, onSaved }) {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Otomatik Yedekleme</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t.dev_schedule}</label>
             <div className="space-y-3">
               <select value={schedule.type} onChange={(e) => updateSchedule('type', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                <option value="none">Kapalı</option>
-                <option value="every15">15 Dakikada Bir</option>
-                <option value="hourly">Saatte Bir</option>
-                <option value="every3h">3 Saatte Bir</option>
-                <option value="every6h">6 Saatte Bir</option>
-                <option value="daily">Her Gün</option>
-                <option value="weekly">Haftada Bir</option>
+                <option value="none">{t.dev_schedule_none}</option>
+                <option value="every15">{t.dev_schedule_every15}</option>
+                <option value="hourly">{t.dev_schedule_hourly}</option>
+                <option value="every3h">{t.dev_schedule_every3h}</option>
+                <option value="every6h">{t.dev_schedule_every6h}</option>
+                <option value="daily">{t.dev_schedule_daily}</option>
+                <option value="weekly">{t.dev_schedule_weekly}</option>
               </select>
               {(schedule.type === 'daily' || schedule.type === 'weekly') && (
                 <div className="flex items-center gap-3">
                   {schedule.type === 'weekly' && (
                     <select value={schedule.weekday} onChange={(e) => updateSchedule('weekday', e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm">
-                      <option value="1">Pazartesi</option>
-                      <option value="2">Salı</option>
-                      <option value="3">Çarşamba</option>
-                      <option value="4">Perşembe</option>
-                      <option value="5">Cuma</option>
-                      <option value="6">Cumartesi</option>
-                      <option value="0">Pazar</option>
+                      <option value="1">{t.weekday_1}</option>
+                      <option value="2">{t.weekday_2}</option>
+                      <option value="3">{t.weekday_3}</option>
+                      <option value="4">{t.weekday_4}</option>
+                      <option value="5">{t.weekday_5}</option>
+                      <option value="6">{t.weekday_6}</option>
+                      <option value="0">{t.weekday_0}</option>
                     </select>
                   )}
                   <div className="flex items-center gap-1">
-                    <span className="text-sm text-gray-500">Saat:</span>
+                    <span className="text-sm text-gray-500">{t.dev_schedule_time}:</span>
                     <select value={schedule.hour} onChange={(e) => updateSchedule('hour', e.target.value)} className="px-2 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm">
                       {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((h) => <option key={h} value={h}>{h}</option>)}
                     </select>
@@ -231,8 +230,8 @@ function DeviceModal({ device, onClose, onSaved }) {
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">İptal</button>
-            <button type="submit" disabled={saving} className="px-4 py-2 bg-cyan-600 text-white text-sm rounded-lg hover:bg-cyan-700 disabled:opacity-50">{saving ? 'Kaydediliyor...' : 'Kaydet'}</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">{t.cancel}</button>
+            <button type="submit" disabled={saving} className="px-4 py-2 bg-cyan-600 text-white text-sm rounded-lg hover:bg-cyan-700 disabled:opacity-50">{saving ? t.saving : t.save}</button>
           </div>
         </form>
       </div>
@@ -240,7 +239,7 @@ function DeviceModal({ device, onClose, onSaved }) {
   );
 }
 
-function DeleteModal({ device, onClose, onDeleted }) {
+function DeleteModal({ device, onClose, onDeleted, t }) {
   const [keepBackups, setKeepBackups] = useState(true);
   const [deleting, setDeleting] = useState(false);
 
@@ -253,22 +252,21 @@ function DeleteModal({ device, onClose, onDeleted }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-xl">
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">Cihaz Sil</h2>
-        <p className="text-sm text-gray-600 mb-4"><strong>{device.name}</strong> cihazını silmek istediğinize emin misiniz?</p>
+        <h2 className="text-lg font-semibold text-gray-800 mb-2">{t.dev_confirm_delete(device.name)}</h2>
         <label className="flex items-center gap-2 text-sm text-gray-700 mb-4">
           <input type="checkbox" checked={keepBackups} onChange={(e) => setKeepBackups(e.target.checked)} className="rounded" />
-          Mevcut yedekleri koru
+          {t.dev_delete_keep}
         </label>
         <div className="flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">İptal</button>
-          <button onClick={handleDelete} disabled={deleting} className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50">{deleting ? 'Siliniyor...' : 'Sil'}</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">{t.cancel}</button>
+          <button onClick={handleDelete} disabled={deleting} className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50">{deleting ? t.loading : t.dev_delete_remove}</button>
         </div>
       </div>
     </div>
   );
 }
 
-function BulkImportModal({ onClose, onImported }) {
+function BulkImportModal({ onClose, onImported, t }) {
   const [step, setStep] = useState('upload');
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -300,7 +298,7 @@ function BulkImportModal({ onClose, onImported }) {
       setPreview(res.data);
       setStep('preview');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Dosya okunamadı');
+      setError(err.response?.data?.detail || t.error_occurred);
     } finally {
       setLoading(false);
     }
@@ -316,7 +314,7 @@ function BulkImportModal({ onClose, onImported }) {
       setResult(res.data);
       setStep('done');
     } catch (err) {
-      setError(err.response?.data?.detail || 'İçe aktarma başarısız');
+      setError(err.response?.data?.detail || t.error_occurred);
     } finally {
       setLoading(false);
     }
@@ -328,7 +326,7 @@ function BulkImportModal({ onClose, onImported }) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <FileSpreadsheet size={20} className="text-cyan-600" />
-            <h2 className="text-lg font-semibold text-gray-800">Toplu Cihaz Aktarımı (CSV)</h2>
+            <h2 className="text-lg font-semibold text-gray-800">{t.bulk_title}</h2>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
@@ -339,19 +337,18 @@ function BulkImportModal({ onClose, onImported }) {
           <div className="space-y-4">
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-cyan-400 transition-colors">
               <Upload size={32} className="mx-auto text-gray-400 mb-3" />
-              <p className="text-sm text-gray-600 mb-2">CSV dosyanızı seçin</p>
+              <p className="text-sm text-gray-600 mb-2">{t.bulk_select_file}</p>
               <input ref={fileRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
               <button onClick={() => fileRef.current?.click()} disabled={loading} className="px-4 py-2 bg-cyan-600 text-white text-sm rounded-lg hover:bg-cyan-700 disabled:opacity-50">
-                {loading ? <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" />Okunuyor...</span> : 'Dosya Seç'}
+                {loading ? <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" />{t.loading}</span> : t.bulk_upload}
               </button>
             </div>
             <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
               <div>
-                <p className="text-sm font-medium text-gray-700">Örnek CSV şablonu</p>
-                <p className="text-xs text-gray-400">Doğru formatta doldurmak için şablonu indirin</p>
+                <p className="text-sm font-medium text-gray-700">{t.bulk_download_template}</p>
               </div>
               <button onClick={handleDownloadTemplate} className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-white">
-                <Download size={14} /> Şablon İndir
+                <Download size={14} /> {t.bulk_download_template}
               </button>
             </div>
           </div>
@@ -361,16 +358,16 @@ function BulkImportModal({ onClose, onImported }) {
           <div className="flex-1 overflow-auto space-y-4">
             <div className="flex gap-4">
               <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
-                <span className="text-sm text-gray-600">Toplam: <strong>{preview.total}</strong></span>
+                <span className="text-sm text-gray-600">{t.bulk_step_preview}: <strong>{preview.total}</strong></span>
               </div>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
                 <CheckCircle size={14} className="text-green-600" />
-                <span className="text-sm text-green-700">Geçerli: <strong>{preview.valid}</strong></span>
+                <span className="text-sm text-green-700">{t.bulk_valid}: <strong>{preview.valid}</strong></span>
               </div>
               {preview.invalid > 0 && (
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded-lg">
                   <XCircle size={14} className="text-red-600" />
-                  <span className="text-sm text-red-700">Hatalı: <strong>{preview.invalid}</strong></span>
+                  <span className="text-sm text-red-700">{t.bulk_invalid}: <strong>{preview.invalid}</strong></span>
                 </div>
               )}
             </div>
@@ -380,12 +377,12 @@ function BulkImportModal({ onClose, onImported }) {
                 <thead className="bg-gray-50 text-gray-500 sticky top-0">
                   <tr>
                     <th className="px-3 py-2 font-medium text-left">#</th>
-                    <th className="px-3 py-2 font-medium text-left">Ad</th>
-                    <th className="px-3 py-2 font-medium text-left">Vendor</th>
-                    <th className="px-3 py-2 font-medium text-left">IP</th>
-                    <th className="px-3 py-2 font-medium text-left">Port</th>
-                    <th className="px-3 py-2 font-medium text-left">Lokasyon</th>
-                    <th className="px-3 py-2 font-medium text-left">Durum</th>
+                    <th className="px-3 py-2 font-medium text-left">{t.dev_name}</th>
+                    <th className="px-3 py-2 font-medium text-left">{t.dev_vendor}</th>
+                    <th className="px-3 py-2 font-medium text-left">{t.dev_ip}</th>
+                    <th className="px-3 py-2 font-medium text-left">{t.dev_port}</th>
+                    <th className="px-3 py-2 font-medium text-left">{t.dev_location}</th>
+                    <th className="px-3 py-2 font-medium text-left">{t.dev_status}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -403,7 +400,7 @@ function BulkImportModal({ onClose, onImported }) {
                       <td className="px-3 py-2 text-gray-600">{r.location || '-'}</td>
                       <td className="px-3 py-2">
                         {r.valid ? (
-                          <span className="flex items-center gap-1 text-green-600"><CheckCircle size={12} />Geçerli</span>
+                          <span className="flex items-center gap-1 text-green-600"><CheckCircle size={12} />{t.bulk_valid}</span>
                         ) : (
                           <span className="text-red-600" title={r.errors.join(', ')}>{r.errors.join(', ')}</span>
                         )}
@@ -416,11 +413,11 @@ function BulkImportModal({ onClose, onImported }) {
 
             <div className="flex justify-between items-center pt-2">
               <button onClick={() => { setStep('upload'); setFile(null); setPreview(null); }} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
-                Geri
+                {t.cancel}
               </button>
               <button onClick={handleImport} disabled={loading || preview.valid === 0} className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-lg hover:bg-cyan-700 disabled:opacity-50">
                 {loading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                {preview.valid} Cihaz Aktar
+                {t.bulk_import} ({preview.valid})
               </button>
             </div>
           </div>
@@ -430,11 +427,11 @@ function BulkImportModal({ onClose, onImported }) {
           <div className="text-center py-8 space-y-4">
             <CheckCircle size={48} className="mx-auto text-green-500" />
             <div>
-              <p className="text-lg font-semibold text-gray-800">{result.created} cihaz eklendi</p>
-              {result.skipped > 0 && <p className="text-sm text-gray-500">{result.skipped} satır atlandı (hatalı veya mükerrer)</p>}
+              <p className="text-lg font-semibold text-gray-800">{t.bulk_success(result.created)}</p>
+              {result.skipped > 0 && <p className="text-sm text-gray-500">{result.skipped} {t.bulk_row}</p>}
             </div>
             <button onClick={() => { onImported(); onClose(); }} className="px-4 py-2 bg-cyan-600 text-white text-sm rounded-lg hover:bg-cyan-700">
-              Tamam
+              {t.save}
             </button>
           </div>
         )}
@@ -444,6 +441,8 @@ function BulkImportModal({ onClose, onImported }) {
 }
 
 export default function Devices() {
+  const { lang, t } = useLang();
+  const locale = lang === 'tr' ? 'tr-TR' : 'en-US';
   const [devices, setDevices] = useState([]);
   const [showModal, setShowModal] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -464,10 +463,10 @@ export default function Devices() {
     setBackingUp(id);
     try {
       const res = await api.post(`/devices/${id}/backup`);
-      showToast(res.data.status === 'success' ? 'Backup başarılı' : `Hata: ${res.data.error}`, res.data.status === 'success' ? 'success' : 'error');
+      showToast(res.data.status === 'success' ? t.success : `${t.failed}: ${res.data.error}`, res.data.status === 'success' ? 'success' : 'error');
       load();
     } catch {
-      showToast('Backup başarısız', 'error');
+      showToast(t.failed, 'error');
     } finally {
       setBackingUp(null);
     }
@@ -477,9 +476,9 @@ export default function Devices() {
     setTesting(id);
     try {
       const res = await api.post(`/devices/${id}/test`);
-      showToast(res.data.status === 'success' ? 'Bağlantı başarılı' : `Hata: ${res.data.message}`, res.data.status === 'success' ? 'success' : 'error');
+      showToast(res.data.status === 'success' ? t.success : `${t.failed}: ${res.data.message}`, res.data.status === 'success' ? 'success' : 'error');
     } catch {
-      showToast('Bağlantı testi başarısız', 'error');
+      showToast(t.failed, 'error');
     } finally {
       setTesting(null);
     }
@@ -488,13 +487,13 @@ export default function Devices() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Cihazlar</h1>
+        <h1 className="text-2xl font-bold text-gray-800">{t.dev_title}</h1>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowBulkImport(true)} className="flex items-center gap-2 border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">
-            <Upload size={16} /> CSV İçe Aktar
+            <Upload size={16} /> {t.dev_csv_import}
           </button>
           <button onClick={() => setShowModal({})} className="flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-cyan-700">
-            <Plus size={18} /> Cihaz Ekle
+            <Plus size={18} /> {t.dev_add}
           </button>
         </div>
       </div>
@@ -509,14 +508,14 @@ export default function Devices() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-left">
             <tr>
-              <th className="px-4 py-3 font-medium">Cihaz</th>
-              <th className="px-4 py-3 font-medium">Vendor</th>
-              <th className="px-4 py-3 font-medium">IP</th>
-              <th className="px-4 py-3 font-medium">Lokasyon</th>
-              <th className="px-4 py-3 font-medium">Yedek</th>
-              <th className="px-4 py-3 font-medium">Schedule</th>
-              <th className="px-4 py-3 font-medium">Son Backup</th>
-              <th className="px-4 py-3 font-medium text-right">İşlemler</th>
+              <th className="px-4 py-3 font-medium">{t.dev_name}</th>
+              <th className="px-4 py-3 font-medium">{t.dev_vendor}</th>
+              <th className="px-4 py-3 font-medium">{t.dev_ip}</th>
+              <th className="px-4 py-3 font-medium">{t.dev_location}</th>
+              <th className="px-4 py-3 font-medium">{t.dev_status}</th>
+              <th className="px-4 py-3 font-medium">{t.dev_schedule}</th>
+              <th className="px-4 py-3 font-medium">{t.dev_last_backup}</th>
+              <th className="px-4 py-3 font-medium text-right">{t.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -535,22 +534,22 @@ export default function Devices() {
                 </td>
                 <td className="px-4 py-3 text-gray-600">
                   <span className="text-green-600 font-medium">{d.backup_count}</span>
-                  {d.failed_count > 0 && <span className="text-red-500 text-xs ml-1">/ {d.failed_count} hata</span>}
+                  {d.failed_count > 0 && <span className="text-red-500 text-xs ml-1">/ {d.failed_count} {t.failed}</span>}
                 </td>
-                <td className="px-4 py-3 text-gray-600">{d.schedule_cron ? <span className="flex items-center gap-1"><Clock size={14} />{formatCron(d.schedule_cron)}</span> : <span className="text-gray-400">-</span>}</td>
-                <td className="px-4 py-3 text-gray-600 text-xs">{d.last_backup ? new Date(d.last_backup).toLocaleString('tr-TR') : '-'}</td>
+                <td className="px-4 py-3 text-gray-600">{d.schedule_cron ? <span className="flex items-center gap-1"><Clock size={14} />{formatCron(d.schedule_cron, t)}</span> : <span className="text-gray-400">-</span>}</td>
+                <td className="px-4 py-3 text-gray-600 text-xs">{d.last_backup ? new Date(d.last_backup).toLocaleString(locale) : t.dev_never}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
-                    <button onClick={() => handleTest(d.id)} disabled={testing === d.id} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-cyan-600" title="Bağlantı Testi">
+                    <button onClick={() => handleTest(d.id)} disabled={testing === d.id} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-cyan-600" title={t.dev_test_connection}>
                       <Wifi size={16} className={testing === d.id ? 'animate-pulse' : ''} />
                     </button>
-                    <button onClick={() => handleBackup(d.id)} disabled={backingUp === d.id} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-green-600" title="Backup Al">
+                    <button onClick={() => handleBackup(d.id)} disabled={backingUp === d.id} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-green-600" title={t.dev_backup_now}>
                       <Play size={16} className={backingUp === d.id ? 'animate-spin' : ''} />
                     </button>
-                    <button onClick={() => setShowModal(d)} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-cyan-600" title="Düzenle">
+                    <button onClick={() => setShowModal(d)} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-cyan-600" title={t.dev_edit}>
                       <Pencil size={16} />
                     </button>
-                    <button onClick={() => setDeleteTarget(d)} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-red-600" title="Sil">
+                    <button onClick={() => setDeleteTarget(d)} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-red-600" title={t.dev_delete_remove}>
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -558,15 +557,15 @@ export default function Devices() {
               </tr>
             ))}
             {devices.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">Henüz cihaz eklenmemiş</td></tr>
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">{t.dev_no_devices}</td></tr>
             )}
           </tbody>
         </table>
       </div>
 
-      {showModal && <DeviceModal device={showModal.id ? showModal : null} onClose={() => setShowModal(null)} onSaved={() => { setShowModal(null); load(); }} />}
-      {deleteTarget && <DeleteModal device={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={() => { setDeleteTarget(null); load(); }} />}
-      {showBulkImport && <BulkImportModal onClose={() => setShowBulkImport(false)} onImported={load} />}
+      {showModal && <DeviceModal device={showModal.id ? showModal : null} onClose={() => setShowModal(null)} onSaved={() => { setShowModal(null); load(); }} t={t} />}
+      {deleteTarget && <DeleteModal device={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={() => { setDeleteTarget(null); load(); }} t={t} />}
+      {showBulkImport && <BulkImportModal onClose={() => setShowBulkImport(false)} onImported={load} t={t} />}
     </div>
   );
 }

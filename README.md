@@ -1,77 +1,78 @@
 # ConfBox
 
-Network cihazlarinin konfigurasyon yedeklerini otomatik alan, dosya olarak saklayan acik kaynakli web uygulamasi.
+Open-source web application that automatically backs up network device configurations and stores them as plain files.
 
 ![Dashboard](https://img.shields.io/badge/stack-FastAPI%20%2B%20React-blue)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-green)
 ![Docker](https://img.shields.io/badge/deploy-Docker%20Compose-blue)
 
-## Desteklenen Cihazlar
+## Supported Devices
 
-| Vendor | Protokol | Detay |
-|--------|----------|-------|
+| Vendor | Protocol | Detail |
+|--------|----------|--------|
 | **FortiGate** | REST API | Config backup via `/api/v2/monitor/system/config/backup` |
 | **Juniper** | SSH (Netmiko) | `show configuration \| display set` |
 | **Cisco** (IOS/NX-OS/ASA) | SSH (Netmiko) | `show running-config` |
 | **Palo Alto** | PAN-OS XML API | Config export via XML API |
 
-## Ozellikler
+## Features
 
-- Otomatik zamanlanmis yedekleme (cron tabanli)
-- Manuel tek tusla backup
-- Config diff / karsilastirma
-- CSV ile toplu cihaz aktarimi
-- Dashboard istatistikleri ve trend grafikleri
-- Lokasyon bazli cihaz yonetimi
-- E-posta bildirimleri (basarili/basarisiz backup)
-- Dark mode / gece modu
-- Rol tabanli erisim (Admin / Backup Admin)
-- 2FA (TOTP) destegi
+- Automated scheduled backups (cron-based)
+- One-click manual backup
+- Config diff / comparison
+- CSV bulk device import
+- Dashboard statistics and trend charts
+- Location-based device management
+- Email notifications (success/failure)
+- Dark mode / light mode
+- Multi-language support (English & Turkish)
+- Role-based access control (Admin / Backup Admin)
+- Two-factor authentication (TOTP)
 - Audit log
-- Sifrelenmis kimlik bilgileri (AES-256-CBC)
+- Encrypted credentials (AES-256-CBC)
 - Rate limiting
-- Duz dosya saklama -- uygulama cokse bile `backups/` dizinine gidip dosyalara erisilebilir
+- Plain file storage — even if the app crashes, you can access configs directly from the `backups/` directory
 
-## Hizli Kurulum
+## Quick Start
 
-### Gereksinimler
+### Requirements
 - Docker & Docker Compose
 
-### 1. Repoyu klonlayin
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/yunuskargi/confbox.git
 cd confbox
 ```
 
-### 2. Ortam degiskenlerini ayarlayin
+### 2. Configure environment variables
 
 ```bash
 cp .env.example .env
-# .env dosyasindaki JWT_SECRET degerini degistirin!
+# Change the JWT_SECRET value in .env!
 ```
 
-### 3. Calistirin
+### 3. Run
 
 ```bash
 docker compose up -d
 ```
 
-Uygulama `http://localhost` adresinde calisacaktir.
+The application will be available at `http://localhost:6161`.
 
-### 4. Giris yapin
+### 4. Login
 
-- **Kullanici:** `admin`
-- **Sifre:** `admin`
+- **Username:** `admin`
+- **Password:** `admin`
 
-> Ilk giristen sonra sifrenizi degistirmeniz onerilir.
+> It is recommended to change your password after first login.
 
-## Yedek Dosya Yapisi
+## Backup File Structure
 
 ```
 backups/
 ├── fortigate/
-│   └── cihaz-adi/
+│   └── device-name/
 │       ├── 2024-01-15_020000.conf
 │       └── 2024-01-16_020000.conf
 ├── juniper/
@@ -79,18 +80,18 @@ backups/
 └── paloalto/
 ```
 
-## API Dokumantasyonu
+## API Documentation
 
-Backend calistiktan sonra Swagger UI'a erisebilirsiniz:
+Once the backend is running, you can access Swagger UI:
 
 ```
 http://localhost:8000/docs
 ```
 
-## Lisans
+## License
 
-Bu proje [AGPL-3.0](LICENSE) lisansi altinda yayinlanmistir.
+This project is licensed under [AGPL-3.0](LICENSE).
 
-## Katki
+## Contributing
 
-Pull request'ler ve issue'lar memnuniyetle karsilanir. Buyuk degisiklikler icin once bir issue aciniz.
+Pull requests and issues are welcome. For major changes, please open an issue first.

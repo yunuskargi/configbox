@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
 import { Plus, Pencil, Trash2, X, Shield, ShieldCheck } from 'lucide-react';
+import { useLang } from '../context/LangContext';
 
-function UserModal({ targetUser, onClose, onSaved }) {
+function UserModal({ targetUser, onClose, onSaved, t }) {
   const isEdit = !!targetUser?.id;
   const [form, setForm] = useState(targetUser || { username: '', password: '', role: 'backup_admin' });
   const [saving, setSaving] = useState(false);
@@ -22,7 +23,7 @@ function UserModal({ targetUser, onClose, onSaved }) {
       }
       onSaved();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Bir hata oluştu');
+      setError(err.response?.data?.detail || t.error_occurred);
     } finally {
       setSaving(false);
     }
@@ -32,30 +33,30 @@ function UserModal({ targetUser, onClose, onSaved }) {
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-800">{isEdit ? 'Kullanıcı Düzenle' : 'Yeni Kullanıcı'}</h2>
+          <h2 className="text-lg font-semibold text-gray-800">{isEdit ? t.usr_edit : t.usr_new}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</div>}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Kullanıcı Adı</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.usr_username}</label>
             <input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{isEdit ? 'Yeni Şifre (boş bırakırsan değişmez)' : 'Şifre'}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{isEdit ? t.usr_password_edit : t.usr_password}</label>
             <input type="password" value={form.password || ''} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" required={!isEdit} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.usr_role}</label>
             <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
-              <option value="admin">Admin</option>
-              <option value="backup_admin">Backup Admin</option>
+              <option value="admin">{t.usr_role_admin}</option>
+              <option value="backup_admin">{t.usr_role_backup_admin}</option>
             </select>
-            <p className="text-xs text-gray-400 mt-1">Backup Admin: cihaz ekleme, backup alma ve görüntüleme. Admin: tüm yetkiler.</p>
+            <p className="text-xs text-gray-400 mt-1">{t.usr_role_desc}</p>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">İptal</button>
-            <button type="submit" disabled={saving} className="px-4 py-2 bg-cyan-600 text-white text-sm rounded-lg hover:bg-cyan-700 disabled:opacity-50">{saving ? 'Kaydediliyor...' : 'Kaydet'}</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">{t.cancel}</button>
+            <button type="submit" disabled={saving} className="px-4 py-2 bg-cyan-600 text-white text-sm rounded-lg hover:bg-cyan-700 disabled:opacity-50">{saving ? t.saving : t.save}</button>
           </div>
         </form>
       </div>
@@ -67,6 +68,8 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [showModal, setShowModal] = useState(null);
   const [toast, setToast] = useState(null);
+  const { lang, t } = useLang();
+  const locale = lang === 'tr' ? 'tr-TR' : 'en-US';
 
   const load = () => api.get('/users').then((r) => setUsers(r.data));
   useEffect(() => { load(); }, []);
@@ -77,22 +80,22 @@ export default function Users() {
   };
 
   const handleDelete = async (u) => {
-    if (!confirm(`"${u.username}" kullanıcısını silmek istediğinize emin misiniz?`)) return;
+    if (!confirm(t.usr_confirm_delete(u.username))) return;
     try {
       await api.delete(`/users/${u.id}`);
-      showToast('Kullanıcı silindi');
+      showToast(t.usr_deleted);
       load();
     } catch (err) {
-      showToast(err.response?.data?.detail || 'Hata oluştu', 'error');
+      showToast(err.response?.data?.detail || t.error_occurred, 'error');
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Kullanıcılar</h1>
+        <h1 className="text-2xl font-bold text-gray-800">{t.usr_title}</h1>
         <button onClick={() => setShowModal({})} className="flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-cyan-700">
-          <Plus size={18} /> Kullanıcı Ekle
+          <Plus size={18} /> {t.usr_add}
         </button>
       </div>
 
@@ -106,10 +109,10 @@ export default function Users() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 text-left">
             <tr>
-              <th className="px-4 py-3 font-medium">Kullanıcı</th>
-              <th className="px-4 py-3 font-medium">Rol</th>
-              <th className="px-4 py-3 font-medium">Oluşturulma</th>
-              <th className="px-4 py-3 font-medium text-right">İşlemler</th>
+              <th className="px-4 py-3 font-medium">{t.usr_username}</th>
+              <th className="px-4 py-3 font-medium">{t.usr_role}</th>
+              <th className="px-4 py-3 font-medium">{t.usr_created}</th>
+              <th className="px-4 py-3 font-medium text-right">{t.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -119,10 +122,10 @@ export default function Users() {
                 <td className="px-4 py-3">
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${u.role === 'admin' ? 'bg-cyan-100 text-cyan-700' : 'bg-gray-100 text-gray-700'}`}>
                     {u.role === 'admin' ? <ShieldCheck size={12} /> : <Shield size={12} />}
-                    {u.role === 'admin' ? 'Admin' : 'Backup Admin'}
+                    {u.role === 'admin' ? t.usr_role_admin : t.usr_role_backup_admin}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-gray-600 text-xs">{new Date(u.created_at).toLocaleString('tr-TR')}</td>
+                <td className="px-4 py-3 text-gray-600 text-xs">{new Date(u.created_at).toLocaleString(locale)}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
                     <button onClick={() => setShowModal(u)} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-cyan-600"><Pencil size={16} /></button>
@@ -135,7 +138,7 @@ export default function Users() {
         </table>
       </div>
 
-      {showModal && <UserModal targetUser={showModal.id ? showModal : null} onClose={() => setShowModal(null)} onSaved={() => { setShowModal(null); load(); }} />}
+      {showModal && <UserModal targetUser={showModal.id ? showModal : null} onClose={() => setShowModal(null)} onSaved={() => { setShowModal(null); load(); }} t={t} />}
     </div>
   );
 }

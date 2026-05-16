@@ -1,27 +1,29 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Server, Database, Settings, ChevronLeft, ChevronRight, LogOut, Box, MapPin, Users, Mail, Shield, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, Server, Database, Settings, ChevronLeft, ChevronRight, LogOut, Box, MapPin, Users, Mail, Shield, Moon, Sun, Globe } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLang } from '../context/LangContext';
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { logout, user } = useAuth();
   const { appTitle } = useBranding();
   const { dark, toggle: toggleTheme } = useTheme();
+  const { lang, t, switchLang } = useLang();
 
   const links = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/devices', label: 'Cihazlar', icon: Server },
-    { to: '/backups', label: 'Yedekler', icon: Database },
-    { to: '/locations', label: 'Lokasyonlar', icon: MapPin },
+    { to: '/', label: t.sidebar_dashboard, icon: LayoutDashboard },
+    { to: '/devices', label: t.sidebar_devices, icon: Server },
+    { to: '/backups', label: t.sidebar_backups, icon: Database },
+    { to: '/locations', label: t.sidebar_locations, icon: MapPin },
     ...(user?.role === 'admin' ? [
-      { to: '/users', label: 'Kullanıcılar', icon: Users },
-      { to: '/smtp', label: 'Mail Ayarları', icon: Mail },
-      { to: '/audit', label: 'Audit Log', icon: Shield },
+      { to: '/users', label: t.sidebar_users, icon: Users },
+      { to: '/smtp', label: t.sidebar_mail, icon: Mail },
+      { to: '/audit', label: t.sidebar_audit, icon: Shield },
     ] : []),
-    { to: '/settings', label: 'Ayarlar', icon: Settings },
+    { to: '/settings', label: t.sidebar_settings, icon: Settings },
   ];
 
   return (
@@ -64,13 +66,17 @@ export default function Sidebar() {
             <p className="text-xs text-gray-400">{user?.role === 'admin' ? 'Admin' : 'Backup Admin'}</p>
           </div>
         )}
+        <button onClick={() => switchLang(lang === 'tr' ? 'en' : 'tr')} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 w-full">
+          <Globe size={20} className="shrink-0" />
+          {!collapsed && <span>{lang === 'tr' ? 'English' : 'Türkçe'}</span>}
+        </button>
         <button onClick={toggleTheme} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 w-full">
           {dark ? <Sun size={20} className="shrink-0 text-yellow-500" /> : <Moon size={20} className="shrink-0" />}
-          {!collapsed && <span>{dark ? 'Açık Mod' : 'Gece Modu'}</span>}
+          {!collapsed && <span>{dark ? t.sidebar_light_mode : t.sidebar_dark_mode}</span>}
         </button>
         <button onClick={logout} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 w-full">
           <LogOut size={20} className="shrink-0" />
-          {!collapsed && <span>Çıkış Yap</span>}
+          {!collapsed && <span>{t.sidebar_logout}</span>}
         </button>
         {!collapsed && <p className="text-[10px] text-gray-300 dark:text-gray-600 text-center mt-2">ConfBox v1.0</p>}
       </div>

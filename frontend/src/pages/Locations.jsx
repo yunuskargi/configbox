@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
 import { Plus, Pencil, Trash2, X, MapPin } from 'lucide-react';
+import { useLang } from '../context/LangContext';
 
-function LocationModal({ location, onClose, onSaved }) {
+function LocationModal({ location, onClose, onSaved, t }) {
   const isEdit = !!location?.id;
   const [form, setForm] = useState(location || { name: '', description: '' });
   const [saving, setSaving] = useState(false);
@@ -20,7 +21,7 @@ function LocationModal({ location, onClose, onSaved }) {
       }
       onSaved();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Bir hata oluştu');
+      setError(err.response?.data?.detail || t.error_occurred);
     } finally {
       setSaving(false);
     }
@@ -30,22 +31,22 @@ function LocationModal({ location, onClose, onSaved }) {
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-800">{isEdit ? 'Lokasyon Düzenle' : 'Yeni Lokasyon'}</h2>
+          <h2 className="text-lg font-semibold text-gray-800">{isEdit ? t.loc_edit : t.loc_new}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</div>}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Lokasyon Adı</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.loc_name}</label>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" required />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Açıklama</label>
-            <input value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="Opsiyonel" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.loc_description}</label>
+            <input value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder={t.optional} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">İptal</button>
-            <button type="submit" disabled={saving} className="px-4 py-2 bg-cyan-600 text-white text-sm rounded-lg hover:bg-cyan-700 disabled:opacity-50">{saving ? 'Kaydediliyor...' : 'Kaydet'}</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">{t.cancel}</button>
+            <button type="submit" disabled={saving} className="px-4 py-2 bg-cyan-600 text-white text-sm rounded-lg hover:bg-cyan-700 disabled:opacity-50">{saving ? t.saving : t.save}</button>
           </div>
         </form>
       </div>
@@ -57,6 +58,7 @@ export default function Locations() {
   const [locations, setLocations] = useState([]);
   const [showModal, setShowModal] = useState(null);
   const [toast, setToast] = useState(null);
+  const { t } = useLang();
 
   const load = () => api.get('/locations').then((r) => setLocations(r.data));
   useEffect(() => { load(); }, []);
@@ -67,22 +69,22 @@ export default function Locations() {
   };
 
   const handleDelete = async (loc) => {
-    if (!confirm(`"${loc.name}" lokasyonunu silmek istediğinize emin misiniz?`)) return;
+    if (!confirm(t.loc_confirm_delete(loc.name))) return;
     try {
       await api.delete(`/locations/${loc.id}`);
-      showToast('Lokasyon silindi');
+      showToast(t.loc_deleted);
       load();
     } catch (err) {
-      showToast(err.response?.data?.detail || 'Hata oluştu', 'error');
+      showToast(err.response?.data?.detail || t.error_occurred, 'error');
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Lokasyonlar</h1>
+        <h1 className="text-2xl font-bold text-gray-800">{t.loc_title}</h1>
         <button onClick={() => setShowModal({})} className="flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-cyan-700">
-          <Plus size={18} /> Lokasyon Ekle
+          <Plus size={18} /> {t.loc_add}
         </button>
       </div>
 
@@ -109,16 +111,16 @@ export default function Locations() {
               </div>
             </div>
             <div className="mt-3 pt-3 border-t border-gray-100">
-              <span className="text-sm text-gray-500">{loc.device_count} cihaz</span>
+              <span className="text-sm text-gray-500">{t.loc_device_count(loc.device_count)}</span>
             </div>
           </div>
         ))}
         {locations.length === 0 && (
-          <div className="col-span-full text-center py-8 text-gray-400">Henüz lokasyon eklenmemiş</div>
+          <div className="col-span-full text-center py-8 text-gray-400">{t.loc_no_locations}</div>
         )}
       </div>
 
-      {showModal && <LocationModal location={showModal.id ? showModal : null} onClose={() => setShowModal(null)} onSaved={() => { setShowModal(null); load(); }} />}
+      {showModal && <LocationModal location={showModal.id ? showModal : null} onClose={() => setShowModal(null)} onSaved={() => { setShowModal(null); load(); }} t={t} />}
     </div>
   );
 }
