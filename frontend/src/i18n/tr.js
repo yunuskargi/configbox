@@ -56,7 +56,7 @@ export default {
   login_description: 'FortiGate, Juniper, Cisco & Palo Alto cihazlarınızın konfigürasyonlarını güvenle yedekleyin',
   login_auto_backup: 'Otomatik Yedekleme',
   login_plain_file: 'Düz Dosya Saklama',
-  login_api_support: 'API Desteği',
+  login_multi_vendor: 'Çoklu Vendor',
   login_footer: 'ConfBox v1.0 — Network Config Backup',
 
   // Dashboard

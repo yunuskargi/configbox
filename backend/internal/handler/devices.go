@@ -329,6 +329,7 @@ func BulkTemplate(w http.ResponseWriter, r *http.Request) {
 }
 
 func BulkPreview(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 5<<20)
 	file, header, err := r.FormFile("file")
 	if err != nil {
 		writeError(w, 400, "No file uploaded")
@@ -341,7 +342,7 @@ func BulkPreview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := io.ReadAll(file)
+	content, _ := io.ReadAll(io.LimitReader(file, 5<<20))
 	reader := csv.NewReader(strings.NewReader(string(content)))
 	headers, _ := reader.Read()
 	colMap := make(map[string]int)
@@ -453,6 +454,7 @@ func BulkPreview(w http.ResponseWriter, r *http.Request) {
 }
 
 func BulkImport(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 5<<20) // 5MB limit
 	user := auth.GetUser(r)
 	file, header, err := r.FormFile("file")
 	if err != nil {
@@ -466,7 +468,7 @@ func BulkImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := io.ReadAll(file)
+	content, _ := io.ReadAll(io.LimitReader(file, 5<<20))
 	reader := csv.NewReader(strings.NewReader(string(content)))
 	headers, _ := reader.Read()
 	colMap := make(map[string]int)

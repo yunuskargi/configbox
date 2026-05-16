@@ -2,7 +2,7 @@
 
 Open-source web application that automatically backs up network device configurations and stores them as plain files.
 
-![Dashboard](https://img.shields.io/badge/stack-FastAPI%20%2B%20React-blue)
+![Dashboard](https://img.shields.io/badge/stack-Go%20%2B%20React-blue)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-green)
 ![Docker](https://img.shields.io/badge/deploy-Docker%20Compose-blue)
 
@@ -11,8 +11,8 @@ Open-source web application that automatically backs up network device configura
 | Vendor | Protocol | Detail |
 |--------|----------|--------|
 | **FortiGate** | REST API | Config backup via `/api/v2/monitor/system/config/backup` |
-| **Juniper** | SSH (Netmiko) | `show configuration \| display set` |
-| **Cisco** (IOS/NX-OS/ASA) | SSH (Netmiko) | `show running-config` |
+| **Juniper** | SSH | `show configuration | display set` |
+| **Cisco** (IOS/NX-OS/ASA) | SSH | `show running-config` |
 | **Palo Alto** | PAN-OS XML API | Config export via XML API |
 
 ## Features
@@ -23,7 +23,7 @@ Open-source web application that automatically backs up network device configura
 - CSV bulk device import
 - Dashboard statistics and trend charts
 - Location-based device management
-- Email notifications (success/failure)
+- Email notifications (success/failure/change/daily summary)
 - Dark mode / light mode
 - Multi-language support (English & Turkish)
 - Role-based access control (Admin / Backup Admin)
@@ -31,6 +31,7 @@ Open-source web application that automatically backs up network device configura
 - Audit log
 - Encrypted credentials (AES-256-CBC)
 - Rate limiting
+- Single binary (~30MB Docker image)
 - Plain file storage — even if the app crashes, you can access configs directly from the `backups/` directory
 
 ## Quick Start
@@ -67,6 +68,13 @@ The application will be available at `http://localhost:6161`.
 
 > It is recommended to change your password after first login.
 
+## CLI Commands
+
+```bash
+# Reset a user's password
+./confbox reset-password <username> <new-password>
+```
+
 ## Backup File Structure
 
 ```
@@ -80,13 +88,16 @@ backups/
 └── paloalto/
 ```
 
-## API Documentation
+## Tech Stack
 
-Once the backend is running, you can access Swagger UI:
-
-```
-http://localhost:8000/docs
-```
+| Component | Technology |
+|-----------|-----------|
+| Backend | Go (Chi router, sqlx, golang.org/x/crypto/ssh) |
+| Frontend | React + Vite |
+| Database | SQLite (WAL mode) |
+| Auth | JWT + bcrypt + TOTP |
+| Encryption | AES-256-CBC |
+| Scheduler | robfig/cron |
 
 ## License
 

@@ -260,7 +260,7 @@ export default function Settings() {
         <h3 className="text-sm font-medium text-gray-600 mb-2">{t.set_reset_title}</h3>
         <p className="text-xs text-gray-400">{t.set_reset_desc}</p>
         <code className="block bg-gray-100 rounded px-3 py-2 text-xs font-mono text-gray-600 mt-2">
-          cd backend && python3 reset_password.py admin newpassword
+          ./confbox reset-password admin newpassword
         </code>
       </div>
     </div>

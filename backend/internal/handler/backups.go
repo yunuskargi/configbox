@@ -174,6 +174,8 @@ func DownloadBackup(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filePath)
 }
 
+const maxContentViewSize = 10 * 1024 * 1024 // 10MB
+
 func GetBackupContent(w http.ResponseWriter, r *http.Request) {
 	id := paramInt(r, "id")
 
@@ -187,6 +189,11 @@ func GetBackupContent(w http.ResponseWriter, r *http.Request) {
 
 	if !isPathSafe(filePath) {
 		writeError(w, 403, "Access denied")
+		return
+	}
+
+	if fileSize > maxContentViewSize {
+		writeError(w, 413, "File too large for inline viewing. Use download instead.")
 		return
 	}
 
@@ -217,6 +224,10 @@ func DiffBackups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !isPathSafe(pathA) || !isPathSafe(pathB) {
+		writeError(w, 403, "Access denied")
+		return
+	}
 	if _, err := os.Stat(pathA); os.IsNotExist(err) {
 		writeError(w, 404, "Backup file not found on disk")
 		return
@@ -270,7 +281,9 @@ func DeleteBackup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	os.Remove(filePath)
+	if isPathSafe(filePath) {
+		os.Remove(filePath)
+	}
 	database.DB.Exec("DELETE FROM backups WHERE id = ?", id)
 	writeJSON(w, 200, map[string]string{"message": "Backup deleted"})
 }

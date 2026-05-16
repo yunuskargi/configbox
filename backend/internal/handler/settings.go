@@ -29,6 +29,11 @@ func GetBranding(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetSettings(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUser(r)
+	if user.Role != "admin" {
+		writeError(w, 403, "Admin only")
+		return
+	}
 	retDays, _ := strconv.Atoi(getSetting("retention_days", "90"))
 	writeJSON(w, 200, map[string]any{
 		"backup_dir":     getSetting("backup_dir", "/data/backups"),
@@ -75,11 +80,16 @@ func GetSMTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	port, _ := strconv.Atoi(getSetting("smtp_port", "587"))
+	password := getSetting("smtp_password", "")
+	maskedPassword := ""
+	if password != "" {
+		maskedPassword = "••••••••"
+	}
 	writeJSON(w, 200, map[string]any{
 		"smtp_host":       getSetting("smtp_host", ""),
 		"smtp_port":       port,
 		"smtp_username":   getSetting("smtp_username", ""),
-		"smtp_password":   getSetting("smtp_password", ""),
+		"smtp_password":   maskedPassword,
 		"smtp_use_tls":    getSetting("smtp_use_tls", "true") == "true",
 		"smtp_from_email": getSetting("smtp_from_email", ""),
 		"smtp_from_name":  getSetting("smtp_from_name", "ConfBox"),
@@ -112,7 +122,9 @@ func UpdateSMTP(w http.ResponseWriter, r *http.Request) {
 	setSetting("smtp_host", body.Host)
 	setSetting("smtp_port", strconv.Itoa(body.Port))
 	setSetting("smtp_username", body.Username)
-	setSetting("smtp_password", body.Password)
+	if body.Password != "" && body.Password != "••••••••" {
+		setSetting("smtp_password", body.Password)
+	}
 	setSetting("smtp_use_tls", strconv.FormatBool(body.UseTLS))
 	setSetting("smtp_from_email", body.FromEmail)
 	setSetting("smtp_from_name", body.FromName)

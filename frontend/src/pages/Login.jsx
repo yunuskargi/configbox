@@ -62,8 +62,8 @@ export default function Login() {
               <div className="text-xs text-cyan-300/50 mt-1">{t.login_plain_file}</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">REST</div>
-              <div className="text-xs text-cyan-300/50 mt-1">{t.login_api_support}</div>
+              <div className="text-2xl font-bold text-white">4+</div>
+              <div className="text-xs text-cyan-300/50 mt-1">{t.login_multi_vendor}</div>
             </div>
           </div>
         </div>

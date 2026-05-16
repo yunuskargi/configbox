@@ -19,7 +19,7 @@ func New() http.Handler {
 
 	origins := config.CORSOrigins
 	if len(origins) == 0 {
-		origins = []string{"*"}
+		origins = []string{"http://localhost:5173", "http://localhost:6161"}
 	}
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   origins,

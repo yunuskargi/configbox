@@ -56,7 +56,7 @@ export default {
   login_description: 'Securely back up configurations of your FortiGate, Juniper, Cisco & Palo Alto devices',
   login_auto_backup: 'Automated Backup',
   login_plain_file: 'Plain File Storage',
-  login_api_support: 'API Support',
+  login_multi_vendor: 'Multi-Vendor',
   login_footer: 'ConfBox v1.0 — Network Config Backup',
 
   // Dashboard

@@ -85,6 +85,36 @@ func sanitizeName(name string) string {
 	return name
 }
 
+func normalizeConfig(content, vendor string) string {
+	var lines []string
+	for _, line := range strings.Split(content, "\n") {
+		trimmed := strings.TrimSpace(line)
+		skip := false
+		switch vendor {
+		case "fortigate":
+			if strings.HasPrefix(trimmed, "#") {
+				skip = true
+			}
+		case "cisco":
+			if strings.HasPrefix(trimmed, "! Last configuration change") ||
+				strings.HasPrefix(trimmed, "! NVRAM config last updated") ||
+				strings.HasPrefix(trimmed, "ntp clock-period") ||
+				strings.HasPrefix(trimmed, "! No configuration change since") {
+				skip = true
+			}
+		case "juniper":
+			if strings.HasPrefix(trimmed, "## Last commit:") ||
+				strings.HasPrefix(trimmed, "## Last changed:") {
+				skip = true
+			}
+		}
+		if !skip {
+			lines = append(lines, line)
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
 func RunBackup(deviceID int, triggeredBy string) map[string]any {
 	device := loadDevice(deviceID)
 	timestamp := time.Now().In(config.AppTimezone).Format("2006-01-02_150405")
@@ -127,7 +157,7 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 
 	configChanged := false
 	if previousConfig != "" {
-		configChanged = previousConfig != configContent
+		configChanged = normalizeConfig(previousConfig, device.Vendor) != normalizeConfig(configContent, device.Vendor)
 	}
 
 	database.DB.Exec(`INSERT INTO backups (device_id, file_path, file_size, status, triggered_by, created_at)
