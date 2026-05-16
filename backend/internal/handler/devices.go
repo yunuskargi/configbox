@@ -84,6 +84,17 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if strings.ContainsAny(body.Name, "/\\..") || body.Name == "" {
+		writeError(w, 400, "Invalid device name")
+		return
+	}
+
+	validVendorsSet := map[string]bool{"fortigate": true, "juniper": true, "cisco": true, "paloalto": true}
+	if !validVendorsSet[body.Vendor] {
+		writeError(w, 400, "Invalid vendor")
+		return
+	}
+
 	var exists int
 	database.DB.Get(&exists, "SELECT COUNT(*) FROM devices WHERE name = ?", body.Name)
 	if exists > 0 {
@@ -131,6 +142,12 @@ func GetDevice(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, enrichDevice(id))
 }
 
+var allowedDeviceColumns = map[string]bool{
+	"name": true, "ip_address": true, "port": true, "location_id": true,
+	"vdom": true, "auth_token": true, "ssh_username": true, "ssh_password": true,
+	"enable_password": true, "platform": true, "schedule_cron": true, "is_active": true,
+}
+
 func UpdateDevice(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetUser(r)
 	id := paramInt(r, "id")
@@ -152,8 +169,10 @@ func UpdateDevice(w http.ResponseWriter, r *http.Request) {
 		if val == nil {
 			continue
 		}
-		col := key
-		switch col {
+		if !allowedDeviceColumns[key] {
+			continue
+		}
+		switch key {
 		case "auth_token", "ssh_password", "enable_password":
 			if s, ok := val.(string); ok && s != "" {
 				val = crypto.Encrypt(s)
@@ -175,7 +194,7 @@ func UpdateDevice(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		database.DB.Exec(fmt.Sprintf("UPDATE devices SET %s = ? WHERE id = ?", col), val, id)
+		database.DB.Exec(fmt.Sprintf("UPDATE devices SET %s = ? WHERE id = ?", key), val, id)
 	}
 	database.DB.Exec("UPDATE devices SET updated_at = datetime('now') WHERE id = ?", id)
 

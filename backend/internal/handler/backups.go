@@ -19,6 +19,15 @@ import (
 	"github.com/yunuskargi/confbox/internal/models"
 )
 
+func isPathSafe(filePath string) bool {
+	abs, err := filepath.Abs(filePath)
+	if err != nil {
+		return false
+	}
+	backupAbs, _ := filepath.Abs(config.BackupDir)
+	return strings.HasPrefix(abs, backupAbs)
+}
+
 const downloadTokenTTL = 300
 
 func makeDownloadToken(userID, backupID int) string {
@@ -150,6 +159,11 @@ func DownloadBackup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !isPathSafe(filePath) {
+		writeError(w, 403, "Access denied")
+		return
+	}
+
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		writeError(w, 404, "Backup file not found on disk")
 		return
@@ -168,6 +182,11 @@ func GetBackupContent(w http.ResponseWriter, r *http.Request) {
 	err := database.DB.QueryRow("SELECT file_path, file_size FROM backups WHERE id = ?", id).Scan(&filePath, &fileSize)
 	if err != nil {
 		writeError(w, 404, "Backup not found")
+		return
+	}
+
+	if !isPathSafe(filePath) {
+		writeError(w, 403, "Access denied")
 		return
 	}
 

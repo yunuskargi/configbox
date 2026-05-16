@@ -1,9 +1,9 @@
 package auth
 
 import (
-	"regexp"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -14,7 +14,6 @@ import (
 var (
 	blacklist   = make(map[string]int64)
 	blacklistMu sync.RWMutex
-	passwordRe  = regexp.MustCompile(`^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$`)
 )
 
 func HashPassword(password string) (string, error) {
@@ -30,7 +29,18 @@ func ValidatePassword(password string) string {
 	if len(password) < 8 {
 		return "Password must be at least 8 characters"
 	}
-	if !passwordRe.MatchString(password) {
+	var hasLower, hasUpper, hasDigit bool
+	for _, c := range password {
+		switch {
+		case unicode.IsLower(c):
+			hasLower = true
+		case unicode.IsUpper(c):
+			hasUpper = true
+		case unicode.IsDigit(c):
+			hasDigit = true
+		}
+	}
+	if !hasLower || !hasUpper || !hasDigit {
 		return "Password must contain at least 1 uppercase, 1 lowercase, and 1 digit"
 	}
 	return ""

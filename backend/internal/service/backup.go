@@ -74,10 +74,21 @@ func loadDevice(deviceID int) DeviceInfo {
 	return info
 }
 
+func sanitizeName(name string) string {
+	name = filepath.Base(name)
+	name = strings.ReplaceAll(name, "..", "")
+	name = strings.ReplaceAll(name, "/", "")
+	name = strings.ReplaceAll(name, "\\", "")
+	if name == "" || name == "." {
+		name = "unknown"
+	}
+	return name
+}
+
 func RunBackup(deviceID int, triggeredBy string) map[string]any {
 	device := loadDevice(deviceID)
 	timestamp := time.Now().In(config.AppTimezone).Format("2006-01-02_150405")
-	deviceDir := filepath.Join(config.BackupDir, device.Vendor, device.Name)
+	deviceDir := filepath.Join(config.BackupDir, sanitizeName(device.Vendor), sanitizeName(device.Name))
 	os.MkdirAll(deviceDir, 0755)
 
 	previousConfig := getPreviousConfig(deviceDir)
@@ -156,7 +167,12 @@ func TestDeviceConnection(deviceID int) map[string]any {
 }
 
 func DeleteDeviceBackupFiles(vendor, name string) {
-	deviceDir := filepath.Join(config.BackupDir, vendor, name)
+	deviceDir := filepath.Join(config.BackupDir, sanitizeName(vendor), sanitizeName(name))
+	abs, _ := filepath.Abs(deviceDir)
+	backupAbs, _ := filepath.Abs(config.BackupDir)
+	if !strings.HasPrefix(abs, backupAbs) {
+		return
+	}
 	os.RemoveAll(deviceDir)
 }
 
