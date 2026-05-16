@@ -17,7 +17,7 @@ services:
     container_name: confbox-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "6161:80"
     depends_on:
       - backend
 
