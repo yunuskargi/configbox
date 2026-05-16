@@ -1,4 +1,6 @@
-confbox
+/confbox
 *.db
+*.db-shm
+*.db-wal
 .jwt_secret
 .env
