@@ -66,58 +66,6 @@ Uygulama `http://localhost` adresinde calisacaktir.
 
 > Ilk giristen sonra sifrenizi degistirmeniz onerilir.
 
-## Gelistirme Ortami
-
-### Backend
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Frontend `http://localhost:5173` adresinde calisir ve API isteklerini `localhost:8000`'e proxy'ler.
-
-## Proje Yapisi
-
-```
-confbox/
-├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI uygulama
-│   │   ├── config.py            # Yapilandirma
-│   │   ├── database.py          # SQLite baglantisi
-│   │   ├── models.py            # Veritabani modelleri
-│   │   ├── schemas.py           # Pydantic semalari
-│   │   ├── auth.py              # JWT dogrulama
-│   │   ├── routers/             # API endpoint'leri
-│   │   └── services/            # Backup servisleri
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── pages/               # Sayfa bilesenleri
-│   │   ├── components/          # Ortak bilesenler
-│   │   ├── context/             # React context'ler
-│   │   └── api/                 # Axios istemcisi
-│   ├── Dockerfile
-│   └── nginx.conf
-├── backups/                     # Konfigurasyon dosyalari (mount point)
-├── docker-compose.yml
-├── .env.example
-└── README.md
-```
-
 ## Yedek Dosya Yapisi
 
 ```
