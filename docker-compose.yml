@@ -6,11 +6,11 @@ services:
     env_file: .env
     volumes:
       - ./backups:/data/backups
-      - db-data:/app/data
+      - db-data:/data
     environment:
-      - DATABASE_URL=sqlite:////app/data/confbox.db
+      - DATABASE_PATH=/data/confbox.db
       - BACKUP_DIR=/data/backups
-      - TZ=Europe/Istanbul
+      - TZ_OFFSET=3
 
   frontend:
     build: ./frontend

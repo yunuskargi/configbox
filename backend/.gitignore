@@ -1,0 +1,4 @@
+confbox
+*.db
+.jwt_secret
+.env

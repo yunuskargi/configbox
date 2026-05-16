@@ -1,14 +1,17 @@
-FROM python:3.12-slim
+FROM golang:1.23-alpine AS builder
 
-WORKDIR /app
+RUN apk add --no-cache gcc musl-dev
 
-RUN apt-get update && apt-get install -y --no-install-recommends openssh-client && rm -rf /var/lib/apt/lists/*
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+RUN CGO_ENABLED=1 go build -ldflags="-s -w" -o /confbox ./cmd/confbox
 
-COPY app/ app/
-COPY reset_password.py .
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates tzdata
+COPY --from=builder /confbox /confbox
 
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/confbox"]

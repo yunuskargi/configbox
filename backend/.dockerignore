@@ -1,6 +1,0 @@
-__pycache__
-*.pyc
-*.db
-.jwt_secret
-venv/
-.env
