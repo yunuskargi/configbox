@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -86,8 +87,9 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.ContainsAny(body.Name, "/\\..") || body.Name == "" {
-		writeError(w, 400, "Invalid device name")
+	validName := regexp.MustCompile(`^[a-zA-Z0-9._\-\s]{1,64}$`)
+	if !validName.MatchString(body.Name) {
+		writeError(w, 400, "Invalid device name. Use letters, numbers, dots, hyphens, underscores (max 64 chars)")
 		return
 	}
 

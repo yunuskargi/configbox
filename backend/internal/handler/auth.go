@@ -101,6 +101,8 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 	hash, _ := auth.HashPassword(body.NewPassword)
 	database.DB.Exec("UPDATE users SET password_hash = ? WHERE id = ?", hash, user.ID)
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "update", "auth", user.Username, "Password changed", clientIP(r))
 	writeJSON(w, 200, map[string]string{"message": "Password changed"})
 }
 
@@ -142,6 +144,8 @@ func Verify2FA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	database.DB.Exec("UPDATE users SET totp_enabled = 1 WHERE id = ?", user.ID)
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "update", "auth", user.Username, "2FA enabled", clientIP(r))
 	writeJSON(w, 200, map[string]string{"message": "2FA activated"})
 }
 
@@ -157,5 +161,7 @@ func Disable2FA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	database.DB.Exec("UPDATE users SET totp_secret = NULL, totp_enabled = 0 WHERE id = ?", user.ID)
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "update", "auth", user.Username, "2FA disabled", clientIP(r))
 	writeJSON(w, 200, map[string]string{"message": "2FA disabled"})
 }

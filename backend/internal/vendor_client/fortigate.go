@@ -13,6 +13,7 @@ func FetchFortigateConfig(ip string, port int, token string, vdom string) (strin
 
 	client := &http.Client{
 		Timeout:   30 * time.Second,
+		// FortiGate devices use self-signed certificates by default.
 		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 	}
 
@@ -50,6 +51,7 @@ func TestFortigate(ip string, port int, token string, vdom string) error {
 
 	client := &http.Client{
 		Timeout:   10 * time.Second,
+		// FortiGate devices use self-signed certificates by default.
 		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 	}
 

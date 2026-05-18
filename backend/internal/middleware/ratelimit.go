@@ -26,41 +26,45 @@ func cleanupVisitors() {
 	for {
 		time.Sleep(time.Minute)
 		mu.Lock()
-		for ip, v := range visitors {
+		for key, v := range visitors {
 			if time.Since(v.lastSeen) > 3*time.Minute {
-				delete(visitors, ip)
+				delete(visitors, key)
 			}
 		}
 		mu.Unlock()
 	}
 }
 
-func getVisitor(ip string) *rate.Limiter {
+func getVisitor(key string) *rate.Limiter {
 	mu.Lock()
 	defer mu.Unlock()
 
-	v, exists := visitors[ip]
+	v, exists := visitors[key]
 	if !exists {
 		limiter := rate.NewLimiter(rate.Every(time.Minute/5), 5)
-		visitors[ip] = &visitor{limiter: limiter, lastSeen: time.Now()}
+		visitors[key] = &visitor{limiter: limiter, lastSeen: time.Now()}
 		return limiter
 	}
 	v.lastSeen = time.Now()
 	return v.limiter
 }
 
+func extractIP(r *http.Request) string {
+	ip := r.Header.Get("X-Real-IP")
+	if ip == "" {
+		ip = r.Header.Get("X-Forwarded-For")
+	}
+	if ip == "" {
+		ip = r.RemoteAddr
+	}
+	return ip
+}
+
 func RateLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := r.Header.Get("X-Real-IP")
-		if ip == "" {
-			ip = r.Header.Get("X-Forwarded-For")
-		}
-		if ip == "" {
-			ip = r.RemoteAddr
-		}
+		ip := extractIP(r)
 
-		limiter := getVisitor(ip)
-		if !limiter.Allow() {
+		if !getVisitor("ip:"+ip).Allow() {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(429)
 			w.Write([]byte(`{"detail":"Too many requests. Please wait."}`))

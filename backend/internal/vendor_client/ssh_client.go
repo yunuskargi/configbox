@@ -21,6 +21,7 @@ func sshConnect(host string, port int, username, password string, timeout time.D
 		Auth: []ssh.AuthMethod{
 			ssh.Password(password),
 		},
+		// Network devices (routers, firewalls) use self-signed SSH keys with no PKI; host key verification is not feasible.
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         timeout,
 	}

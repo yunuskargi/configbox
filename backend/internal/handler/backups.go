@@ -17,6 +17,7 @@ import (
 	"github.com/yunuskargi/confbox/internal/config"
 	"github.com/yunuskargi/confbox/internal/database"
 	"github.com/yunuskargi/confbox/internal/models"
+	"github.com/yunuskargi/confbox/internal/service"
 )
 
 func isPathSafe(filePath string) bool {
@@ -35,7 +36,7 @@ func makeDownloadToken(userID, backupID int) string {
 	msg := fmt.Sprintf("%d:%d:%d", userID, backupID, ts)
 	mac := hmac.New(sha256.New, []byte(config.JWTSecret))
 	mac.Write([]byte(msg))
-	sig := hex.EncodeToString(mac.Sum(nil))[:32]
+	sig := hex.EncodeToString(mac.Sum(nil))
 	return fmt.Sprintf("%s:%s", msg, sig)
 }
 
@@ -59,7 +60,7 @@ func verifyDownloadToken(token string, backupID int) bool {
 
 	mac := hmac.New(sha256.New, []byte(config.JWTSecret))
 	mac.Write([]byte(msg))
-	expected := hex.EncodeToString(mac.Sum(nil))[:32]
+	expected := hex.EncodeToString(mac.Sum(nil))
 	return hmac.Equal([]byte(sig), []byte(expected))
 }
 
@@ -272,6 +273,7 @@ func DiffBackups(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteBackup(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUser(r)
 	id := paramInt(r, "id")
 
 	var filePath string
@@ -285,5 +287,7 @@ func DeleteBackup(w http.ResponseWriter, r *http.Request) {
 		os.Remove(filePath)
 	}
 	database.DB.Exec("DELETE FROM backups WHERE id = ?", id)
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "delete", "backup", filepath.Base(filePath), "", clientIP(r))
 	writeJSON(w, 200, map[string]string{"message": "Backup deleted"})
 }

@@ -94,6 +94,11 @@ func createTables() {
 		key TEXT PRIMARY KEY,
 		value TEXT
 	);
+
+	CREATE TABLE IF NOT EXISTS token_blacklist (
+		token_hash TEXT PRIMARY KEY,
+		expires_at INTEGER NOT NULL
+	);
 	`
 	DB.MustExec(schema)
 }

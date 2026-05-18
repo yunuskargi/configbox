@@ -14,6 +14,7 @@ func FetchPaloAltoConfig(ip string, port int, token string) (string, error) {
 
 	client := &http.Client{
 		Timeout:   30 * time.Second,
+		// Palo Alto firewalls use self-signed certificates by default.
 		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 	}
 
@@ -41,7 +42,7 @@ func FetchPaloAltoConfig(ip string, port int, token string) (string, error) {
 
 	text := string(body)
 	if strings.Contains(text, "<response") && strings.Contains(text, `status="error"`) {
-		return "", fmt.Errorf("PAN-OS API error: %s", text[:min(200, len(text))])
+		return "", fmt.Errorf("PAN-OS API returned an error")
 	}
 	return text, nil
 }
@@ -51,6 +52,7 @@ func TestPaloAlto(ip string, port int, token string) error {
 
 	client := &http.Client{
 		Timeout:   15 * time.Second,
+		// Palo Alto firewalls use self-signed certificates by default.
 		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 	}
 

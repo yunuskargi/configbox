@@ -1,7 +1,8 @@
 package auth
 
 import (
-	"sync"
+	"crypto/sha256"
+	"encoding/hex"
 	"time"
 	"unicode"
 
@@ -9,11 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/yunuskargi/confbox/internal/config"
-)
-
-var (
-	blacklist   = make(map[string]int64)
-	blacklistMu sync.RWMutex
+	"github.com/yunuskargi/confbox/internal/database"
 )
 
 func HashPassword(password string) (string, error) {
@@ -59,6 +56,9 @@ func CreateToken(username, role string) (string, error) {
 
 func ParseToken(tokenStr string) (username string, role string, err error) {
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
 		return []byte(config.JWTSecret), nil
 	})
 	if err != nil || !token.Valid {
@@ -73,26 +73,22 @@ func ParseToken(tokenStr string) (username string, role string, err error) {
 	return sub, r, nil
 }
 
+func tokenHash(tokenStr string) string {
+	h := sha256.Sum256([]byte(tokenStr))
+	return hex.EncodeToString(h[:])
+}
+
 func BlacklistToken(tokenStr string) {
-	blacklistMu.Lock()
-	defer blacklistMu.Unlock()
-	blacklist[tokenStr] = time.Now().Add(time.Duration(config.JWTExpireMin) * time.Minute).Unix()
+	exp := time.Now().Add(time.Duration(config.JWTExpireMin) * time.Minute).Unix()
+	database.DB.Exec("INSERT OR IGNORE INTO token_blacklist (token_hash, expires_at) VALUES (?, ?)", tokenHash(tokenStr), exp)
 }
 
 func IsBlacklisted(tokenStr string) bool {
-	blacklistMu.RLock()
-	defer blacklistMu.RUnlock()
-	_, ok := blacklist[tokenStr]
-	return ok
+	var count int
+	database.DB.Get(&count, "SELECT COUNT(*) FROM token_blacklist WHERE token_hash = ?", tokenHash(tokenStr))
+	return count > 0
 }
 
 func CleanupBlacklist() {
-	blacklistMu.Lock()
-	defer blacklistMu.Unlock()
-	now := time.Now().Unix()
-	for k, exp := range blacklist {
-		if now > exp {
-			delete(blacklist, k)
-		}
-	}
+	database.DB.Exec("DELETE FROM token_blacklist WHERE expires_at < ?", time.Now().Unix())
 }

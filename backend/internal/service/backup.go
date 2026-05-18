@@ -119,7 +119,7 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 	device := loadDevice(deviceID)
 	timestamp := time.Now().In(config.AppTimezone).Format("2006-01-02_150405")
 	deviceDir := filepath.Join(config.BackupDir, sanitizeName(device.Vendor), sanitizeName(device.Name))
-	os.MkdirAll(deviceDir, 0755)
+	os.MkdirAll(deviceDir, 0700)
 
 	filePath := filepath.Join(deviceDir, timestamp+".conf")
 
@@ -147,10 +147,10 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 			NotifyBackup(device.Name, device.Vendor, "failed", fetchErr.Error(), "", 0, device.LocationName, device.Vdom, triggeredBy)
 		}()
 
-		return map[string]any{"status": "failed", "error": fetchErr.Error()}
+		return map[string]any{"status": "failed", "error": "Backup failed. Check backup history for details."}
 	}
 
-	os.WriteFile(filePath, []byte(configContent), 0644)
+	os.WriteFile(filePath, []byte(configContent), 0600)
 	fi, _ := os.Stat(filePath)
 	fileSize := int(fi.Size())
 

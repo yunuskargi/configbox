@@ -87,13 +87,12 @@ func CleanupOldBackups() {
 	}
 
 	cutoff := time.Now().In(config.AppTimezone).AddDate(0, 0, -days).Format("2006-01-02 15:04:05")
-	query := fmt.Sprintf("SELECT id, file_path FROM backups WHERE created_at < '%s'", cutoff)
 	type row struct {
 		ID       int    `db:"id"`
 		FilePath string `db:"file_path"`
 	}
 	var old []row
-	database.DB.Select(&old, query)
+	database.DB.Select(&old, "SELECT id, file_path FROM backups WHERE created_at < ?", cutoff)
 
 	if len(old) == 0 {
 		return
