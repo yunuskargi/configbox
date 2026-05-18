@@ -71,11 +71,8 @@ The application will be available at `http://localhost:6161`.
 ## CLI Commands
 
 ```bash
-# Reset a user's password (Docker)
+# Reset a user's password
 docker compose exec backend /confbox reset-password <username> <new-password>
-
-# Reset a user's password (standalone)
-./confbox reset-password <username> <new-password>
 ```
 
 ## Backup File Structure
