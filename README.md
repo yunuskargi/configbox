@@ -101,24 +101,30 @@ backups/
 
 ## Updating / Upgrading
 
-Your data is safe during updates. The SQLite database lives in a Docker named volume (`db-data`) and backup files are bind-mounted (`./backups`), so neither is affected by container rebuilds.
+Your data is safe during updates:
+- **Database** → stored in Docker named volume `db-data`, persists across container rebuilds
+- **Config backups** → stored in `./backups` bind mount on your host, untouched during updates
+- **Schema** → uses `CREATE TABLE IF NOT EXISTS`, no manual migration needed
 
-### Docker Hub (pre-built image)
-
-```bash
-docker compose pull
-docker compose up -d
-```
-
-### Self-build (from source)
+### Update Steps
 
 ```bash
+cd confbox
+
+# Pull latest source
 git pull
-docker compose build
-docker compose up -d
+
+# Rebuild and restart (containers are recreated automatically, data is preserved)
+docker compose up -d --build
 ```
 
-> **Warning:** Do NOT change the `JWT_SECRET` value in your `.env` file after initial setup. All device credentials (API tokens, SSH passwords) are encrypted with this key. Changing it will make existing credentials unreadable.
+### Important Notes
+
+> **Do NOT change `JWT_SECRET` in `.env` after initial setup.** All device credentials (API tokens, SSH passwords) are encrypted with this key. Changing it will make existing credentials unreadable — you would need to re-enter all device passwords.
+
+> **Do NOT delete the `db-data` Docker volume.** It contains your SQLite database with all devices, users, backup history, and settings. If you need to check: `docker volume ls | grep db-data`
+
+> **Backup your `.env` file** before updating. If you accidentally lose it, you lose your `JWT_SECRET` and encrypted credentials cannot be recovered.
 
 ## License
 
