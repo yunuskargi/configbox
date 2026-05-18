@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/yunuskargi/confbox/internal/auth"
+	"github.com/yunuskargi/confbox/internal/config"
 	"github.com/yunuskargi/confbox/internal/database"
 	"github.com/yunuskargi/confbox/internal/models"
 )
@@ -51,7 +52,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hash, _ := auth.HashPassword(body.Password)
-	res, _ := database.DB.Exec("INSERT INTO users (username, password_hash, role, created_at) VALUES (?, ?, ?, datetime('now'))", body.Username, hash, body.Role)
+	res, _ := database.DB.Exec("INSERT INTO users (username, password_hash, role, created_at) VALUES (?, ?, ?, ?)", body.Username, hash, body.Role, config.Now())
 	id, _ := res.LastInsertId()
 
 	var user models.User

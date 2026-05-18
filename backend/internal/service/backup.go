@@ -121,7 +121,6 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 	deviceDir := filepath.Join(config.BackupDir, sanitizeName(device.Vendor), sanitizeName(device.Name))
 	os.MkdirAll(deviceDir, 0755)
 
-	previousConfig := getPreviousConfig(deviceDir)
 	filePath := filepath.Join(deviceDir, timestamp+".conf")
 
 	var configContent string
@@ -142,7 +141,7 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 
 	if fetchErr != nil {
 		database.DB.Exec(`INSERT INTO backups (device_id, file_path, file_size, status, error_message, triggered_by, created_at)
-			VALUES (?, ?, 0, 'failed', ?, ?, datetime('now'))`, device.ID, filePath, fetchErr.Error(), triggeredBy)
+			VALUES (?, ?, 0, 'failed', ?, ?, ?)`, device.ID, filePath, fetchErr.Error(), triggeredBy, config.Now())
 
 		go func() {
 			NotifyBackup(device.Name, device.Vendor, "failed", fetchErr.Error(), "", 0, device.LocationName, device.Vdom, triggeredBy)
@@ -156,12 +155,13 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 	fileSize := int(fi.Size())
 
 	configChanged := false
+	previousConfig := getPreviousConfig(deviceDir)
 	if previousConfig != "" {
 		configChanged = normalizeConfig(previousConfig, device.Vendor) != normalizeConfig(configContent, device.Vendor)
 	}
 
 	database.DB.Exec(`INSERT INTO backups (device_id, file_path, file_size, status, triggered_by, created_at)
-		VALUES (?, ?, ?, 'success', ?, datetime('now'))`, device.ID, filePath, fileSize, triggeredBy)
+		VALUES (?, ?, ?, 'success', ?, ?)`, device.ID, filePath, fileSize, triggeredBy, config.Now())
 
 	go func() {
 		NotifyBackup(device.Name, device.Vendor, "success", "", filePath, fileSize, device.LocationName, device.Vdom, triggeredBy)

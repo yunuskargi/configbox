@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import api from '../api/client';
 import { useLang } from '../context/LangContext';
-import { Plus, Play, Pencil, Trash2, Wifi, Clock, X, MapPin, Upload, Download, FileSpreadsheet, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Plus, Play, Pencil, Trash2, Wifi, Clock, X, MapPin, Upload, Download, FileSpreadsheet, CheckCircle, XCircle, Loader2, BookOpen } from 'lucide-react';
 
 const vendorDefaults = { fortigate: { port: 443 }, juniper: { port: 22 }, cisco: { port: 22 }, paloalto: { port: 443 } };
 const ciscoPlatforms = { ios: 'IOS / IOS-XE', nxos: 'NX-OS (Nexus)', asa: 'ASA (Firewall)' };
@@ -440,6 +440,91 @@ function BulkImportModal({ onClose, onImported, t }) {
   );
 }
 
+function VendorGuide({ onClose, t }) {
+  const [active, setActive] = useState('fortigate');
+  const vendors = [
+    { id: 'fortigate', name: 'FortiGate', color: 'text-red-600 bg-red-50 border-red-200' },
+    { id: 'juniper', name: 'Juniper', color: 'text-green-600 bg-green-50 border-green-200' },
+    { id: 'cisco', name: 'Cisco', color: 'text-blue-600 bg-blue-50 border-blue-200' },
+    { id: 'paloalto', name: 'Palo Alto', color: 'text-orange-600 bg-orange-50 border-orange-200' },
+  ];
+  const guides = t.guide_vendors;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <BookOpen size={20} className="text-cyan-600" />
+            <h2 className="text-lg font-semibold text-gray-800">{t.guide_title}</h2>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        </div>
+
+        <div className="flex gap-2 px-6 py-3 border-b border-gray-100 overflow-x-auto">
+          {vendors.map((v) => (
+            <button key={v.id} onClick={() => setActive(v.id)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all whitespace-nowrap ${active === v.id ? v.color : 'text-gray-500 bg-gray-50 border-gray-200 hover:bg-gray-100'}`}>
+              {v.name}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {guides[active] && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">{t.guide_protocol}</h3>
+                <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">{guides[active].protocol}</span>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">{t.guide_port}</h3>
+                <span className="text-sm text-gray-600">{guides[active].port}</span>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">{t.guide_requirements}</h3>
+                <ul className="space-y-1.5">
+                  {guides[active].requirements.map((req, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                      <CheckCircle size={14} className="text-green-500 mt-0.5 shrink-0" />
+                      {req}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">{t.guide_setup_steps}</h3>
+                <ol className="space-y-2">
+                  {guides[active].steps.map((step, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm text-gray-600">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-cyan-100 text-cyan-700 text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              {guides[active].commands && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">{t.guide_device_commands}</h3>
+                  <pre className="bg-gray-900 text-green-400 rounded-lg p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap">{guides[active].commands}</pre>
+                </div>
+              )}
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-xs text-amber-800"><strong>{t.guide_note}:</strong> {guides[active].note}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Devices() {
   const { lang, t } = useLang();
   const locale = lang === 'tr' ? 'tr-TR' : 'en-US';
@@ -449,36 +534,48 @@ export default function Devices() {
   const [backingUp, setBackingUp] = useState(null);
   const [testing, setTesting] = useState(null);
   const [toast, setToast] = useState(null);
+  const [errorDetail, setErrorDetail] = useState(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const load = () => api.get('/devices').then((r) => setDevices(r.data));
   useEffect(() => { load(); }, []);
 
-  const showToast = (msg, type = 'success') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
+  const showToast = (msg, type = 'success', detail = null) => {
+    setToast({ msg, type, detail });
+    if (type === 'success') setTimeout(() => setToast(null), 3000);
   };
 
   const handleBackup = async (id) => {
+    const device = devices.find((d) => d.id === id);
     setBackingUp(id);
     try {
       const res = await api.post(`/devices/${id}/backup`);
-      showToast(res.data.status === 'success' ? t.success : `${t.failed}: ${res.data.error}`, res.data.status === 'success' ? 'success' : 'error');
+      if (res.data.status === 'success') {
+        showToast(t.success, 'success');
+      } else {
+        showToast(`${t.failed}: ${device?.name || id}`, 'error', res.data.error);
+      }
       load();
-    } catch {
-      showToast(t.failed, 'error');
+    } catch (e) {
+      showToast(`${t.failed}: ${device?.name || id}`, 'error', e.response?.data?.detail || e.message);
     } finally {
       setBackingUp(null);
     }
   };
 
   const handleTest = async (id) => {
+    const device = devices.find((d) => d.id === id);
     setTesting(id);
     try {
       const res = await api.post(`/devices/${id}/test`);
-      showToast(res.data.status === 'success' ? t.success : `${t.failed}: ${res.data.message}`, res.data.status === 'success' ? 'success' : 'error');
-    } catch {
-      showToast(t.failed, 'error');
+      if (res.data.status === 'success') {
+        showToast(t.success, 'success');
+      } else {
+        showToast(`${t.failed}: ${device?.name || id}`, 'error', res.data.message);
+      }
+    } catch (e) {
+      showToast(`${t.failed}: ${device?.name || id}`, 'error', e.response?.data?.detail || e.message);
     } finally {
       setTesting(null);
     }
@@ -489,6 +586,9 @@ export default function Devices() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">{t.dev_title}</h1>
         <div className="flex items-center gap-2">
+          <button onClick={() => setShowGuide(true)} className="flex items-center gap-2 border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">
+            <BookOpen size={16} /> {t.guide_title}
+          </button>
           <button onClick={() => setShowBulkImport(true)} className="flex items-center gap-2 border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">
             <Upload size={16} /> {t.dev_csv_import}
           </button>
@@ -499,8 +599,30 @@ export default function Devices() {
       </div>
 
       {toast && (
-        <div className={`p-3 rounded-lg text-sm ${toast.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-          {toast.msg}
+        <div className={`p-3 rounded-lg text-sm ${toast.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700 cursor-pointer'}`}
+          onClick={() => { if (toast.detail) setErrorDetail(toast); }}>
+          <div className="flex items-center justify-between">
+            <span>{toast.msg}</span>
+            {toast.detail && <span className="text-xs underline opacity-60 ml-2">{t.detail}</span>}
+          </div>
+        </div>
+      )}
+
+      {errorDetail && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-red-600">{t.dev_error_title}</h2>
+              <button onClick={() => setErrorDetail(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+            </div>
+            <div className="px-6 py-4">
+              <p className="text-sm text-gray-600 mb-3">{errorDetail.msg}</p>
+              <pre className="bg-gray-900 text-red-400 rounded-lg p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap">{errorDetail.detail}</pre>
+            </div>
+            <div className="px-6 py-3 border-t border-gray-100 flex justify-end">
+              <button onClick={() => setErrorDetail(null)} className="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200">{t.close}</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -566,6 +688,7 @@ export default function Devices() {
       {showModal && <DeviceModal device={showModal.id ? showModal : null} onClose={() => setShowModal(null)} onSaved={() => { setShowModal(null); load(); }} t={t} />}
       {deleteTarget && <DeleteModal device={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={() => { setDeleteTarget(null); load(); }} t={t} />}
       {showBulkImport && <BulkImportModal onClose={() => setShowBulkImport(false)} onImported={load} t={t} />}
+      {showGuide && <VendorGuide onClose={() => setShowGuide(false)} t={t} />}
     </div>
   );
 }

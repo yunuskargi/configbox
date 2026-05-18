@@ -104,6 +104,7 @@ type DeviceOut struct {
 	LastBackup       *string `json:"last_backup"`
 	BackupCount      int     `json:"backup_count"`
 	FailedCount      int     `json:"failed_count"`
+	SSHUsername       *string `json:"ssh_username"`
 	HasToken         bool    `json:"has_token"`
 	HasSSHPassword   bool    `json:"has_ssh_password"`
 	HasEnablePassword bool   `json:"has_enable_password"`

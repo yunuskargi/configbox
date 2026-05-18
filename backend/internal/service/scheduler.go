@@ -3,10 +3,14 @@ package service
 import (
 	"fmt"
 	"log/slog"
+	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/robfig/cron/v3"
 
+	"github.com/yunuskargi/confbox/internal/config"
 	"github.com/yunuskargi/confbox/internal/database"
 )
 
@@ -31,6 +35,10 @@ func StartScheduler() {
 
 	scheduler.AddFunc("0 8 * * *", func() {
 		SendDailySummary()
+	})
+
+	scheduler.AddFunc("0 3 * * *", func() {
+		CleanupOldBackups()
 	})
 
 	scheduler.Start()
@@ -65,6 +73,39 @@ func ScheduleDevice(deviceID int, cronExpr string) {
 		return
 	}
 	jobIDs[deviceID] = entryID
+}
+
+func CleanupOldBackups() {
+	var val *string
+	err := database.DB.Get(&val, "SELECT value FROM settings WHERE key = 'retention_days'")
+	if err != nil || val == nil {
+		return
+	}
+	days, _ := strconv.Atoi(*val)
+	if days <= 0 {
+		return
+	}
+
+	cutoff := time.Now().In(config.AppTimezone).AddDate(0, 0, -days).Format("2006-01-02 15:04:05")
+	query := fmt.Sprintf("SELECT id, file_path FROM backups WHERE created_at < '%s'", cutoff)
+	type row struct {
+		ID       int    `db:"id"`
+		FilePath string `db:"file_path"`
+	}
+	var old []row
+	database.DB.Select(&old, query)
+
+	if len(old) == 0 {
+		return
+	}
+
+	for _, b := range old {
+		if b.FilePath != "" {
+			os.Remove(b.FilePath)
+		}
+		database.DB.Exec("DELETE FROM backups WHERE id = ?", b.ID)
+	}
+	slog.Info("retention cleanup", "deleted", len(old), "retention_days", days)
 }
 
 func RemoveDeviceSchedule(deviceID int) {

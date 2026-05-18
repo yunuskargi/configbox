@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/yunuskargi/confbox/internal/auth"
+	"github.com/yunuskargi/confbox/internal/config"
 	"github.com/yunuskargi/confbox/internal/database"
 	"github.com/yunuskargi/confbox/internal/models"
 )
@@ -52,7 +53,7 @@ func CreateLocation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, _ := database.DB.Exec("INSERT INTO locations (name, description, created_at) VALUES (?, ?, datetime('now'))", body.Name, body.Description)
+	res, _ := database.DB.Exec("INSERT INTO locations (name, description, created_at) VALUES (?, ?, ?)", body.Name, body.Description, config.Now())
 	id, _ := res.LastInsertId()
 
 	var loc models.LocationOut

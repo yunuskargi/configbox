@@ -124,6 +124,7 @@ export default {
   dev_schedule_time: 'Time',
   dev_schedule_day: 'Day',
   dev_no_devices: 'No devices added yet',
+  dev_error_title: 'Error Details',
 
   // Bulk Import
   bulk_title: 'CSV Import',
@@ -283,6 +284,90 @@ export default {
   weekday_4: 'Thursday',
   weekday_5: 'Friday',
   weekday_6: 'Saturday',
+
+  // Vendor Guide
+  guide_title: 'Setup Guide',
+  guide_protocol: 'Protocol',
+  guide_port: 'Default Port',
+  guide_requirements: 'Requirements',
+  guide_setup_steps: 'Setup Steps',
+  guide_device_commands: 'Device Commands',
+  guide_note: 'Note',
+  guide_vendors: {
+    fortigate: {
+      protocol: 'REST API (HTTPS)',
+      port: '443',
+      requirements: [
+        'FortiOS 5.6 or later',
+        'REST API admin profile with read access',
+        'API token generated from the FortiGate GUI',
+        'HTTPS management access enabled on the interface',
+      ],
+      steps: [
+        'Go to System > Administrators > Create New > REST API Admin',
+        'Set a username and select an admin profile (at least read-only)',
+        'Optionally restrict Trusted Hosts to the ConfBox server IP',
+        'Copy the generated API token',
+        'In ConfBox, add the device with the IP, port 443, and paste the token',
+      ],
+      commands: null,
+      note: 'If using VDOM, specify the VDOM name in the VDOM field. Leave empty for non-VDOM setups.',
+    },
+    juniper: {
+      protocol: 'SSH',
+      port: '22',
+      requirements: [
+        'Junos OS device with SSH enabled',
+        'User account with at least read-only access class',
+        'SSH service enabled on the management interface',
+      ],
+      steps: [
+        'Create a user on the Juniper device with read-only or operator class',
+        'Ensure SSH is enabled: "set system services ssh"',
+        'Verify SSH connectivity from the ConfBox server',
+        'In ConfBox, add the device with IP, port 22, SSH username and password',
+      ],
+      commands: 'set system login user confbox class read-only\nset system login user confbox authentication plain-text-password\nset system services ssh',
+      note: 'ConfBox runs "show configuration | display set" to fetch the config.',
+    },
+    cisco: {
+      protocol: 'SSH',
+      port: '22',
+      requirements: [
+        'Cisco IOS, IOS-XE, NX-OS, or ASA device',
+        'SSH enabled (crypto key generated)',
+        'User with privilege level 15 or enable password',
+        'VTY lines configured for SSH access',
+      ],
+      steps: [
+        'Create a local user with privilege 15 or use enable password',
+        'Generate SSH keys if not already done',
+        'Configure VTY lines for SSH access',
+        'Select the correct platform (IOS, NX-OS, or ASA) in ConfBox',
+        'In ConfBox, add the device with IP, port 22, SSH credentials, and enable password',
+      ],
+      commands: 'username confbox privilege 15 secret YourPassword\ncrypto key generate rsa modulus 2048\nip ssh version 2\nline vty 0 4\n transport input ssh\n login local',
+      note: 'Enable password is required if the user does not have privilege level 15. Select the correct platform type for your device.',
+    },
+    paloalto: {
+      protocol: 'PAN-OS XML API (HTTPS)',
+      port: '443',
+      requirements: [
+        'PAN-OS 8.0 or later',
+        'API key generated from the firewall',
+        'User with at least "superreader" admin role',
+        'HTTPS management access enabled',
+      ],
+      steps: [
+        'Create an admin user with "superreader" role',
+        'Generate an API key via: https://<firewall>/api/?type=keygen&user=USERNAME&password=PASSWORD',
+        'Copy the API key from the XML response',
+        'In ConfBox, add the device with IP, port 443, and paste the API key',
+      ],
+      commands: null,
+      note: 'The API key is tied to the user account. If the password changes, a new key must be generated.',
+    },
+  },
 
   // Language
   lang_tr: 'Türkçe',

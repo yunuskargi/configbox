@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/yunuskargi/confbox/internal/auth"
+	"github.com/yunuskargi/confbox/internal/config"
 	"github.com/yunuskargi/confbox/internal/crypto"
 	"github.com/yunuskargi/confbox/internal/database"
 	"github.com/yunuskargi/confbox/internal/models"
@@ -22,21 +23,22 @@ func enrichDevice(id int) models.DeviceOut {
 	row := database.DB.QueryRow(`
 		SELECT d.id, d.name, d.vendor, d.ip_address, d.port, d.location_id, l.name,
 		       d.vdom, d.platform, d.schedule_cron, d.is_active, d.created_at, d.updated_at,
-		       d.auth_token, d.ssh_password, d.enable_password
+		       d.auth_token, d.ssh_username, d.ssh_password, d.enable_password
 		FROM devices d LEFT JOIN locations l ON l.id = d.location_id
 		WHERE d.id = ?`, id)
 
 	var locID *int
 	var locName, vdom, platform, cron *string
-	var authToken, sshPass, enablePass *string
+	var authToken, sshUser, sshPass, enablePass *string
 	row.Scan(&out.ID, &out.Name, &out.Vendor, &out.IPAddress, &out.Port,
 		&locID, &locName, &vdom, &platform, &cron, &out.IsActive, &out.CreatedAt, &out.UpdatedAt,
-		&authToken, &sshPass, &enablePass)
+		&authToken, &sshUser, &sshPass, &enablePass)
 	out.LocationID = locID
 	out.LocationName = locName
 	out.Vdom = vdom
 	out.Platform = platform
 	out.ScheduleCron = cron
+	out.SSHUsername = sshUser
 	out.HasToken = authToken != nil && *authToken != ""
 	out.HasSSHPassword = sshPass != nil && *sshPass != ""
 	out.HasEnablePassword = enablePass != nil && *enablePass != ""
@@ -115,9 +117,10 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 	enablePass := encryptOptional(body.EnablePassword)
 
 	res, _ := database.DB.Exec(`INSERT INTO devices (name, vendor, ip_address, port, location_id, vdom, auth_token, ssh_username, ssh_password, enable_password, platform, schedule_cron, is_active, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
 		body.Name, body.Vendor, body.IPAddress, body.Port, body.LocationID, body.Vdom,
-		authToken, body.SSHUsername, sshPass, enablePass, platform, body.ScheduleCron)
+		authToken, body.SSHUsername, sshPass, enablePass, platform, body.ScheduleCron,
+		config.Now(), config.Now())
 
 	id, _ := res.LastInsertId()
 	uid := user.ID
@@ -196,7 +199,7 @@ func UpdateDevice(w http.ResponseWriter, r *http.Request) {
 		}
 		database.DB.Exec(fmt.Sprintf("UPDATE devices SET %s = ? WHERE id = ?", key), val, id)
 	}
-	database.DB.Exec("UPDATE devices SET updated_at = datetime('now') WHERE id = ?", id)
+	database.DB.Exec("UPDATE devices SET updated_at = ? WHERE id = ?", config.Now(), id)
 
 	var name string
 	database.DB.Get(&name, "SELECT name FROM devices WHERE id = ?", id)
@@ -231,10 +234,10 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 
 	if !keepBackups {
 		service.DeleteDeviceBackupFiles(device.Vendor, device.Name)
+		database.DB.Exec("DELETE FROM backups WHERE device_id = ?", id)
 	}
 
 	service.RemoveDeviceSchedule(id)
-	database.DB.Exec("DELETE FROM backups WHERE device_id = ?", id)
 	database.DB.Exec("DELETE FROM devices WHERE id = ?", id)
 
 	uid := user.ID
@@ -298,7 +301,7 @@ func SetSchedule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	database.DB.Exec("UPDATE devices SET schedule_cron = ?, updated_at = datetime('now') WHERE id = ?", body.Cron, id)
+	database.DB.Exec("UPDATE devices SET schedule_cron = ?, updated_at = ? WHERE id = ?", body.Cron, config.Now(), id)
 	service.ScheduleDevice(id, body.Cron)
 	writeJSON(w, 200, map[string]string{"message": "Schedule updated", "cron": body.Cron})
 }
@@ -312,7 +315,7 @@ func RemoveSchedule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	database.DB.Exec("UPDATE devices SET schedule_cron = NULL, updated_at = datetime('now') WHERE id = ?", id)
+	database.DB.Exec("UPDATE devices SET schedule_cron = NULL, updated_at = ? WHERE id = ?", config.Now(), id)
 	service.RemoveDeviceSchedule(id)
 	writeJSON(w, 200, map[string]string{"message": "Schedule removed"})
 }
@@ -550,8 +553,9 @@ func BulkImport(w http.ResponseWriter, r *http.Request) {
 		vdom := getCol("vdom")
 
 		database.DB.Exec(`INSERT INTO devices (name, vendor, ip_address, port, location_id, vdom, auth_token, ssh_username, ssh_password, enable_password, platform, is_active, created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
-			name, vendor, ip, port, locID, nilIfEmpty(vdom), authToken, nilIfEmpty(sshUser), sshPass, enablePass, platform)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+			name, vendor, ip, port, locID, nilIfEmpty(vdom), authToken, nilIfEmpty(sshUser), sshPass, enablePass, platform,
+			config.Now(), config.Now())
 
 		nameSet[name] = true
 		created++

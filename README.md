@@ -99,6 +99,27 @@ backups/
 | Encryption | AES-256-CBC |
 | Scheduler | robfig/cron |
 
+## Updating / Upgrading
+
+Your data is safe during updates. The SQLite database lives in a Docker named volume (`db-data`) and backup files are bind-mounted (`./backups`), so neither is affected by container rebuilds.
+
+### Docker Hub (pre-built image)
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+### Self-build (from source)
+
+```bash
+git pull
+docker compose build
+docker compose up -d
+```
+
+> **Warning:** Do NOT change the `JWT_SECRET` value in your `.env` file after initial setup. All device credentials (API tokens, SSH passwords) are encrypted with this key. Changing it will make existing credentials unreadable.
+
 ## License
 
 This project is licensed under [AGPL-3.0](LICENSE).

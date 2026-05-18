@@ -124,6 +124,7 @@ export default {
   dev_schedule_time: 'Saat',
   dev_schedule_day: 'Gün',
   dev_no_devices: 'Henüz cihaz eklenmemiş',
+  dev_error_title: 'Hata Detayı',
 
   // Bulk Import
   bulk_title: 'CSV İçe Aktarım',
@@ -283,6 +284,90 @@ export default {
   weekday_4: 'Perşembe',
   weekday_5: 'Cuma',
   weekday_6: 'Cumartesi',
+
+  // Vendor Guide
+  guide_title: 'Kurulum Rehberi',
+  guide_protocol: 'Protokol',
+  guide_port: 'Varsayılan Port',
+  guide_requirements: 'Gereksinimler',
+  guide_setup_steps: 'Kurulum Adımları',
+  guide_device_commands: 'Cihaz Komutları',
+  guide_note: 'Not',
+  guide_vendors: {
+    fortigate: {
+      protocol: 'REST API (HTTPS)',
+      port: '443',
+      requirements: [
+        'FortiOS 5.6 veya üstü',
+        'Read yetkili REST API admin profili',
+        "FortiGate arayüzünden oluşturulmuş API token'ı",
+        'Arayüzde HTTPS yönetim erişimi açık olmalı',
+      ],
+      steps: [
+        "System > Administrators > Create New > REST API Admin'e gidin",
+        'Kullanıcı adı girin ve admin profili seçin (en az read-only)',
+        'Trusted Hosts alanı ile ConfBox sunucu IP\'sini kısıtlayabilirsiniz',
+        "Oluşturulan API token'ı kopyalayın",
+        "ConfBox'ta cihazı IP, port 443 ve token ile ekleyin",
+      ],
+      commands: null,
+      note: 'VDOM kullanıyorsanız, VDOM alanına VDOM adını yazın. VDOM yoksa boş bırakın.',
+    },
+    juniper: {
+      protocol: 'SSH',
+      port: '22',
+      requirements: [
+        'SSH aktif Junos OS cihaz',
+        'En az read-only erişim sınıfında kullanıcı hesabı',
+        'Yönetim arayüzünde SSH servisi açık olmalı',
+      ],
+      steps: [
+        'Juniper cihazda read-only veya operator sınıfında kullanıcı oluşturun',
+        'SSH\'nin açık olduğundan emin olun: "set system services ssh"',
+        'ConfBox sunucusundan SSH bağlantısını doğrulayın',
+        'ConfBox\'ta cihazı IP, port 22, SSH kullanıcı adı ve şifresi ile ekleyin',
+      ],
+      commands: 'set system login user confbox class read-only\nset system login user confbox authentication plain-text-password\nset system services ssh',
+      note: 'ConfBox konfigürasyonu çekmek için "show configuration | display set" komutunu çalıştırır.',
+    },
+    cisco: {
+      protocol: 'SSH',
+      port: '22',
+      requirements: [
+        'Cisco IOS, IOS-XE, NX-OS veya ASA cihaz',
+        'SSH aktif (crypto key oluşturulmuş)',
+        'Privilege level 15 kullanıcı veya enable şifresi',
+        'VTY hatları SSH erişimi için ayarlanmış olmalı',
+      ],
+      steps: [
+        'Privilege 15 yetkili lokal kullanıcı oluşturun veya enable şifre kullanın',
+        'SSH anahtarları oluşturulmamışsa oluşturun',
+        'VTY hatlarını SSH erişimi için yapılandırın',
+        'ConfBox\'ta doğru platformu seçin (IOS, NX-OS veya ASA)',
+        'ConfBox\'ta cihazı IP, port 22, SSH bilgileri ve enable şifresi ile ekleyin',
+      ],
+      commands: 'username confbox privilege 15 secret YourPassword\ncrypto key generate rsa modulus 2048\nip ssh version 2\nline vty 0 4\n transport input ssh\n login local',
+      note: 'Kullanıcı privilege level 15 değilse enable şifresi gereklidir. Cihazınız için doğru platform tipini seçin.',
+    },
+    paloalto: {
+      protocol: 'PAN-OS XML API (HTTPS)',
+      port: '443',
+      requirements: [
+        'PAN-OS 8.0 veya üstü',
+        'Firewall üzerinden oluşturulmuş API anahtarı',
+        'En az "superreader" admin rolüne sahip kullanıcı',
+        'HTTPS yönetim erişimi açık olmalı',
+      ],
+      steps: [
+        '"superreader" rolünde admin kullanıcı oluşturun',
+        'API anahtarı oluşturun: https://<firewall>/api/?type=keygen&user=KULLANICI&password=SIFRE',
+        'XML yanıtından API anahtarını kopyalayın',
+        'ConfBox\'ta cihazı IP, port 443 ve API anahtarı ile ekleyin',
+      ],
+      commands: null,
+      note: 'API anahtarı kullanıcı hesabına bağlıdır. Şifre değişirse yeni anahtar oluşturulmalıdır.',
+    },
+  },
 
   // Language
   lang_tr: 'Türkçe',

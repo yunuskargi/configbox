@@ -32,8 +32,13 @@ func Load() {
 	BackupDir = getEnv("BACKUP_DIR", filepath.Join(baseDir, "..", "backups"))
 	DatabasePath = getEnv("DATABASE_PATH", filepath.Join(baseDir, "confbox.db"))
 
-	TZOffset, _ = strconv.Atoi(getEnv("TZ_OFFSET", "3"))
-	AppTimezone = time.FixedZone("APP", TZOffset*3600)
+	tz := getEnv("TZ", "Europe/Istanbul")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		TZOffset, _ = strconv.Atoi(getEnv("TZ_OFFSET", "3"))
+		loc = time.FixedZone("APP", TZOffset*3600)
+	}
+	AppTimezone = loc
 
 	JWTSecret = getJWTSecret(baseDir)
 	JWTExpireMin, _ = strconv.Atoi(getEnv("JWT_EXPIRE_MINUTES", "480"))
@@ -50,6 +55,10 @@ func Load() {
 			}
 		}
 	}
+}
+
+func Now() string {
+	return time.Now().In(AppTimezone).Format("2006-01-02 15:04:05")
 }
 
 func getEnv(key, fallback string) string {
