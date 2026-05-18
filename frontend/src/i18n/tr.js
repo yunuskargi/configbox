@@ -161,6 +161,9 @@ export default {
   bak_added: 'eklenen',
   bak_removed: 'kaldırılan',
   bak_no_diff: 'Fark bulunamadı — konfigürasyonlar aynı',
+  bak_auth_title: 'Kimlik Doğrulama',
+  bak_auth_desc: 'Bu yedeği indirmek için şifrenizi girin.',
+  bak_password_placeholder: 'Şifre',
 
   // Locations
   loc_title: 'Lokasyonlar',

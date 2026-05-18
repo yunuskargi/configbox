@@ -161,6 +161,9 @@ export default {
   bak_added: 'added',
   bak_removed: 'removed',
   bak_no_diff: 'No differences found — configurations are identical',
+  bak_auth_title: 'Authentication',
+  bak_auth_desc: 'Enter your password to download this backup.',
+  bak_password_placeholder: 'Password',
 
   // Locations
   loc_title: 'Locations',

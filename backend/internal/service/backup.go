@@ -150,7 +150,12 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 		return map[string]any{"status": "failed", "error": "Backup failed. Check backup history for details."}
 	}
 
-	os.WriteFile(filePath, []byte(configContent), 0600)
+	if err := os.WriteFile(filePath, []byte(configContent), 0600); err != nil {
+		slog.Error("failed to write backup file", "path", filePath, "error", err)
+		database.DB.Exec(`INSERT INTO backups (device_id, file_path, file_size, status, error_message, triggered_by, created_at)
+			VALUES (?, ?, 0, 'failed', ?, ?, ?)`, device.ID, filePath, "Failed to write backup file", triggeredBy, config.Now())
+		return map[string]any{"status": "failed", "error": "Backup failed. Check backup history for details."}
+	}
 	fi, _ := os.Stat(filePath)
 	fileSize := int(fi.Size())
 

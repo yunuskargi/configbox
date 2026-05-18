@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"time"
 )
 
 type User struct {
@@ -151,6 +150,3 @@ type AuditLogOut struct {
 	CreatedAt    string  `json:"created_at"`
 }
 
-func NowLocal() string {
-	return time.Now().In(nil).UTC().Format("2006-01-02 15:04:05")
-}

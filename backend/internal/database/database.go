@@ -99,6 +99,12 @@ func createTables() {
 		token_hash TEXT PRIMARY KEY,
 		expires_at INTEGER NOT NULL
 	);
+
+	CREATE INDEX IF NOT EXISTS idx_backups_device_id ON backups(device_id);
+	CREATE INDEX IF NOT EXISTS idx_backups_created_at ON backups(created_at);
+	CREATE INDEX IF NOT EXISTS idx_backups_status ON backups(status);
+	CREATE INDEX IF NOT EXISTS idx_devices_is_active ON devices(is_active);
+	CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
 	`
 	DB.MustExec(schema)
 }
