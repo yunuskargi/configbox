@@ -1,6 +1,8 @@
-# ConfBox
+# ConfBox — Network Configuration Backup Manager
 
-Open-source web application that automatically backs up network device configurations and stores them as plain files.
+Free, open-source network configuration backup tool for FortiGate, Cisco, Juniper, and Palo Alto devices. Automated config backups with a modern web UI, config diff comparison, email notifications, and Docker deployment in minutes.
+
+An alternative to RANCID, Oxidized, and SolarWinds NCM — with a modern dashboard, built-in user management, and zero licensing costs.
 
 ![Dashboard](https://img.shields.io/badge/stack-Go%20%2B%20React-blue)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-green)
