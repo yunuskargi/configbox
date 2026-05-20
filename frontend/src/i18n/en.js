@@ -323,17 +323,18 @@ export default {
       port: '22',
       requirements: [
         'Junos OS device with SSH enabled',
-        'User account with at least read-only access class',
+        'User account with view and view-configuration permissions',
         'SSH service enabled on the management interface',
       ],
       steps: [
-        'Create a user on the Juniper device with read-only or operator class',
+        'Create a custom login class with view + view-configuration permissions',
+        'Create a user and assign the custom class',
         'Ensure SSH is enabled: "set system services ssh"',
         'Verify SSH connectivity from the ConfBox server',
         'In ConfBox, add the device with IP, port 22, SSH username and password',
       ],
-      commands: 'set system login user confbox class read-only\nset system login user confbox authentication plain-text-password\nset system services ssh',
-      note: 'ConfBox runs "show configuration | display set" to fetch the config.',
+      commands: 'set system login class confbox-class permissions [view view-configuration]\nset system login user confbox class confbox-class\nset system login user confbox authentication plain-text-password\nset system services ssh',
+      note: 'ConfBox runs "show configuration | display set" to fetch the config. The default read-only class is NOT sufficient — it does not allow viewing configuration.',
     },
     cisco: {
       protocol: 'SSH',

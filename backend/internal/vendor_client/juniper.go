@@ -12,7 +12,7 @@ func FetchJuniperConfig(ip string, port int, username, password string) (string,
 	}
 	defer client.Close()
 
-	output, err := sshRunCommand(client, "show configuration | display set", 60*time.Second)
+	output, err := sshRunCommand(client, "show configuration | display set | no-more", 60*time.Second)
 	if err != nil {
 		return "", fmt.Errorf("command execution failed: %v", err)
 	}

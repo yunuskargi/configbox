@@ -323,17 +323,18 @@ export default {
       port: '22',
       requirements: [
         'SSH aktif Junos OS cihaz',
-        'En az read-only erişim sınıfında kullanıcı hesabı',
+        'view ve view-configuration yetkilerine sahip kullanıcı hesabı',
         'Yönetim arayüzünde SSH servisi açık olmalı',
       ],
       steps: [
-        'Juniper cihazda read-only veya operator sınıfında kullanıcı oluşturun',
+        'view + view-configuration yetkilerine sahip özel bir login class oluşturun',
+        'Kullanıcı oluşturup bu class\'ı atayın',
         'SSH\'nin açık olduğundan emin olun: "set system services ssh"',
         'ConfBox sunucusundan SSH bağlantısını doğrulayın',
         'ConfBox\'ta cihazı IP, port 22, SSH kullanıcı adı ve şifresi ile ekleyin',
       ],
-      commands: 'set system login user confbox class read-only\nset system login user confbox authentication plain-text-password\nset system services ssh',
-      note: 'ConfBox konfigürasyonu çekmek için "show configuration | display set" komutunu çalıştırır.',
+      commands: 'set system login class confbox-class permissions [view view-configuration]\nset system login user confbox class confbox-class\nset system login user confbox authentication plain-text-password\nset system services ssh',
+      note: 'ConfBox konfigürasyonu çekmek için "show configuration | display set" komutunu çalıştırır. Varsayılan read-only class yeterli DEĞİLDİR — konfigürasyon görüntüleme izni vermez.',
     },
     cisco: {
       protocol: 'SSH',
