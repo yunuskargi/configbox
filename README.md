@@ -8,6 +8,8 @@ An alternative to RANCID, Oxidized, and SolarWinds NCM — with a modern dashboa
 ![License](https://img.shields.io/badge/license-AGPL--3.0-green)
 ![Docker](https://img.shields.io/badge/deploy-Docker%20Compose-blue)
 
+![ConfBox Dashboard](docs/dashboard.png)
+
 ## Supported Devices
 
 | Vendor | Protocol | Detail |
