@@ -124,6 +124,7 @@ export default {
   dev_schedule_time: 'Time',
   dev_schedule_day: 'Day',
   dev_no_devices: 'No devices added yet',
+  dev_filter_all: 'All',
   dev_error_title: 'Error Details',
 
   // Bulk Import
@@ -341,19 +342,18 @@ export default {
       port: '22',
       requirements: [
         'Cisco IOS, IOS-XE, NX-OS, or ASA device',
-        'SSH enabled (crypto key generated)',
-        'User with privilege level 15 or enable password',
-        'VTY lines configured for SSH access',
+        'SSH enabled (crypto key generated for IOS/IOS-XE)',
+        'IOS/IOS-XE: User with privilege level 15 or enable password',
+        'NX-OS (Nexus/MDS): User with a custom role (show + exec permissions)',
       ],
       steps: [
-        'Create a local user with privilege 15 or use enable password',
-        'Generate SSH keys if not already done',
-        'Configure VTY lines for SSH access',
+        'For IOS/IOS-XE: Create a user with privilege 15 and configure VTY lines for SSH',
+        'For NX-OS (Nexus/MDS): Create a custom role with show + exec permissions and assign it to the user',
         'Select the correct platform (IOS, NX-OS, or ASA) in ConfBox',
-        'In ConfBox, add the device with IP, port 22, SSH credentials, and enable password',
+        'In ConfBox, add the device with IP, port 22, SSH credentials',
       ],
-      commands: 'username confbox privilege 15 secret YourPassword\ncrypto key generate rsa modulus 2048\nip ssh version 2\nline vty 0 4\n transport input ssh\n login local',
-      note: 'Enable password is required if the user does not have privilege level 15. Select the correct platform type for your device.',
+      commands: '# === IOS / IOS-XE ===\nusername confbox privilege 15 secret YourPassword\ncrypto key generate rsa modulus 2048\nip ssh version 2\nline vty 0 4\n transport input ssh\n login local\n\n# === NX-OS (Nexus / MDS SAN Switch) ===\nrole name confbox-role\n  rule 1 permit show\n  rule 2 permit exec\nusername confbox role confbox-role password YourPassword',
+      note: 'IOS/IOS-XE: Enable password is required if the user does not have privilege 15. NX-OS: The default network-operator role may not be sufficient on MDS switches — use a custom role with show + exec permissions.',
     },
     paloalto: {
       protocol: 'PAN-OS XML API (HTTPS)',

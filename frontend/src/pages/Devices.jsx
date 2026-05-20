@@ -537,6 +537,7 @@ export default function Devices() {
   const [errorDetail, setErrorDetail] = useState(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [vendorFilter, setVendorFilter] = useState('all');
 
   const load = () => api.get('/devices').then((r) => setDevices(r.data));
   useEffect(() => { load(); }, []);
@@ -598,6 +599,27 @@ export default function Devices() {
         </div>
       </div>
 
+      {devices.length > 0 && (
+        <div className="flex items-center gap-2">
+          {[
+            { id: 'all', label: t.dev_filter_all || 'All', color: 'bg-gray-100 text-gray-700 border-gray-300' },
+            { id: 'fortigate', label: 'FortiGate', color: 'bg-orange-50 text-orange-700 border-orange-300' },
+            { id: 'juniper', label: 'Juniper', color: 'bg-teal-50 text-teal-700 border-teal-300' },
+            { id: 'cisco', label: 'Cisco', color: 'bg-indigo-50 text-indigo-700 border-indigo-300' },
+            { id: 'paloalto', label: 'Palo Alto', color: 'bg-red-50 text-red-700 border-red-300' },
+          ].map((v) => {
+            const count = v.id === 'all' ? devices.length : devices.filter((d) => d.vendor === v.id).length;
+            if (v.id !== 'all' && count === 0) return null;
+            return (
+              <button key={v.id} onClick={() => setVendorFilter(v.id)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${vendorFilter === v.id ? v.color : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
+                {v.label} <span className="ml-1 text-xs opacity-70">({count})</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {toast && (
         <div className={`p-3 rounded-lg text-sm ${toast.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700 cursor-pointer'}`}
           onClick={() => { if (toast.detail) setErrorDetail(toast); }}>
@@ -641,7 +663,7 @@ export default function Devices() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {devices.map((d) => (
+            {devices.filter((d) => vendorFilter === 'all' || d.vendor === vendorFilter).map((d) => (
               <tr key={d.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium text-gray-800">{d.name}</td>
                 <td className="px-4 py-3">

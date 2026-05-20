@@ -124,6 +124,7 @@ export default {
   dev_schedule_time: 'Saat',
   dev_schedule_day: 'Gün',
   dev_no_devices: 'Henüz cihaz eklenmemiş',
+  dev_filter_all: 'Tümü',
   dev_error_title: 'Hata Detayı',
 
   // Bulk Import
@@ -341,19 +342,18 @@ export default {
       port: '22',
       requirements: [
         'Cisco IOS, IOS-XE, NX-OS veya ASA cihaz',
-        'SSH aktif (crypto key oluşturulmuş)',
-        'Privilege level 15 kullanıcı veya enable şifresi',
-        'VTY hatları SSH erişimi için ayarlanmış olmalı',
+        'SSH aktif (IOS/IOS-XE için crypto key oluşturulmuş)',
+        'IOS/IOS-XE: Privilege level 15 kullanıcı veya enable şifresi',
+        'NX-OS (Nexus/MDS): Özel rol ile kullanıcı (show + exec yetkileri)',
       ],
       steps: [
-        'Privilege 15 yetkili lokal kullanıcı oluşturun veya enable şifre kullanın',
-        'SSH anahtarları oluşturulmamışsa oluşturun',
-        'VTY hatlarını SSH erişimi için yapılandırın',
+        'IOS/IOS-XE için: Privilege 15 kullanıcı oluşturun ve VTY hatlarını SSH için yapılandırın',
+        'NX-OS (Nexus/MDS) için: show + exec yetkili özel rol oluşturun ve kullanıcıya atayın',
         'ConfBox\'ta doğru platformu seçin (IOS, NX-OS veya ASA)',
-        'ConfBox\'ta cihazı IP, port 22, SSH bilgileri ve enable şifresi ile ekleyin',
+        'ConfBox\'ta cihazı IP, port 22, SSH bilgileri ile ekleyin',
       ],
-      commands: 'username confbox privilege 15 secret YourPassword\ncrypto key generate rsa modulus 2048\nip ssh version 2\nline vty 0 4\n transport input ssh\n login local',
-      note: 'Kullanıcı privilege level 15 değilse enable şifresi gereklidir. Cihazınız için doğru platform tipini seçin.',
+      commands: '# === IOS / IOS-XE ===\nusername confbox privilege 15 secret YourPassword\ncrypto key generate rsa modulus 2048\nip ssh version 2\nline vty 0 4\n transport input ssh\n login local\n\n# === NX-OS (Nexus / MDS SAN Switch) ===\nrole name confbox-role\n  rule 1 permit show\n  rule 2 permit exec\nusername confbox role confbox-role password YourPassword',
+      note: 'IOS/IOS-XE: Kullanıcı privilege 15 değilse enable şifresi gereklidir. NX-OS: MDS switch\'lerde varsayılan network-operator rolü yeterli olmayabilir — show + exec yetkili özel rol kullanın.',
     },
     paloalto: {
       protocol: 'PAN-OS XML API (HTTPS)',
