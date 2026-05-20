@@ -90,25 +90,25 @@ func mailWrapper(title, content string) string {
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%%">
 <!-- Header -->
-<tr><td style="background:linear-gradient(135deg,#1e293b 0%%,#334155 100%%);padding:32px 40px;border-radius:12px 12px 0 0">
+<tr><td style="background:linear-gradient(135deg,#0e7490 0%%,#0891b2 100%%);padding:32px 40px;border-radius:12px 12px 0 0">
 <table width="100%%"><tr>
 <td><span style="font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.5px">📦 ConfBox</span></td>
-<td align="right"><span style="font-size:12px;color:#94a3b8">%s</span></td>
+<td align="right"><span style="font-size:12px;color:#cffafe">%s</span></td>
 </tr></table>
-<p style="margin:8px 0 0;font-size:14px;color:#cbd5e1">Network Configuration Backup Manager</p>
+<p style="margin:8px 0 0;font-size:14px;color:#e0f7fa">Network Configuration Backup Manager</p>
 </td></tr>
 <!-- Title Bar -->
 <tr><td style="background-color:#ffffff;padding:24px 40px 0;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0">
-<h1 style="margin:0;font-size:20px;font-weight:600;color:#1e293b">%s</h1>
-<hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0 0">
+<h1 style="margin:0;font-size:20px;font-weight:600;color:#0e7490">%s</h1>
+<hr style="border:none;border-top:2px solid #cffafe;margin:16px 0 0">
 </td></tr>
 <!-- Content -->
 <tr><td style="background-color:#ffffff;padding:24px 40px 32px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0">
 %s
 </td></tr>
 <!-- Footer -->
-<tr><td style="background-color:#f8fafc;padding:20px 40px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none">
-<p style="margin:0;font-size:12px;color:#64748b;text-align:center">
+<tr><td style="background-color:#f0fdfa;padding:20px 40px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none">
+<p style="margin:0;font-size:12px;color:#0e7490;text-align:center">
 This is an automated notification from ConfBox. Do not reply to this email.
 </p>
 </td></tr>
@@ -158,13 +158,13 @@ func formatSize(fileSize int) string {
 
 func SendTestEmail(to string) error {
 	content := `<div style="text-align:center;padding:20px 0">
-<div style="background-color:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:24px;margin-bottom:20px">
+<div style="background-color:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;padding:24px;margin-bottom:20px">
 <span style="font-size:48px;display:block;margin-bottom:12px">✅</span>
-<p style="margin:0;font-size:18px;font-weight:600;color:#166534">SMTP Connection Successful</p>
-<p style="margin:8px 0 0;font-size:14px;color:#15803d">Email notifications are configured and working correctly.</p>
+<p style="margin:0;font-size:18px;font-weight:600;color:#0e7490">SMTP Connection Successful</p>
+<p style="margin:8px 0 0;font-size:14px;color:#0891b2">Email notifications are configured and working correctly.</p>
 </div>
 <table width="100%" style="margin-top:20px;border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0">
-<tr><td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;background-color:#f8fafc;border-bottom:1px solid #e2e8f0">Status</td><td style="padding:12px 16px;font-size:13px;color:#1e293b;background-color:#f8fafc;border-bottom:1px solid #e2e8f0">` + badge("Connected", "#dcfce7", "#166534") + `</td></tr>
+<tr><td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;background-color:#f0fdfa;border-bottom:1px solid #e2e8f0">Status</td><td style="padding:12px 16px;font-size:13px;color:#1e293b;background-color:#f0fdfa;border-bottom:1px solid #e2e8f0">` + badge("Connected", "#cffafe", "#0e7490") + `</td></tr>
 <tr><td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;background-color:#ffffff;border-bottom:1px solid #e2e8f0">Recipient</td><td style="padding:12px 16px;font-size:13px;color:#1e293b;background-color:#ffffff;border-bottom:1px solid #e2e8f0">` + html.EscapeString(to) + `</td></tr>
 <tr><td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;background-color:#f8fafc">Timestamp</td><td style="padding:12px 16px;font-size:13px;color:#1e293b;background-color:#f8fafc">` + time.Now().In(config.AppTimezone).Format("02 Jan 2006, 15:04:05") + `</td></tr>
 </table>
@@ -269,8 +269,8 @@ func NotifyConfigChange(deviceName, vendor, location, vdom string) {
 	content.WriteString(infoRow("Detected At", now, "#f8fafc"))
 	content.WriteString(`</table>`)
 
-	content.WriteString(`<div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px 20px">
-<p style="margin:0;font-size:13px;color:#475569">💡 <strong>Tip:</strong> Use the ConfBox dashboard to compare configurations and view the exact changes using the diff viewer.</p>
+	content.WriteString(`<div style="background-color:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;padding:16px 20px">
+<p style="margin:0;font-size:13px;color:#0e7490">💡 <strong>Tip:</strong> Use the ConfBox dashboard to compare configurations and view the exact changes using the diff viewer.</p>
 </div>`)
 
 	title := fmt.Sprintf("Config Change - %s", deviceName)
@@ -319,8 +319,8 @@ func SendDailySummary() {
 
 	// Stat cards
 	content.WriteString(`<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px"><tr>`)
-	content.WriteString(statCard("Active Devices", strconv.Itoa(activeDevices), "#3b82f6", "#eff6ff"))
-	content.WriteString(statCard("Total Backups", strconv.Itoa(total), "#8b5cf6", "#f5f3ff"))
+	content.WriteString(statCard("Active Devices", strconv.Itoa(activeDevices), "#0891b2", "#ecfeff"))
+	content.WriteString(statCard("Total Backups", strconv.Itoa(total), "#0e7490", "#cffafe"))
 	content.WriteString(statCard("Successful", strconv.Itoa(success), "#16a34a", "#f0fdf4"))
 	content.WriteString(statCard("Failed", strconv.Itoa(failed), "#dc2626", "#fef2f2"))
 	content.WriteString(`</tr></table>`)
@@ -328,7 +328,7 @@ func SendDailySummary() {
 	// Success rate bar
 	content.WriteString(fmt.Sprintf(`<div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin-bottom:24px">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-<span style="font-size:14px;font-weight:600;color:#1e293b">Success Rate</span>
+<span style="font-size:14px;font-weight:600;color:#0e7490">Success Rate</span>
 <span style="font-size:20px;font-weight:700;color:%s">%s%%</span>
 </div>
 <div style="background-color:#e2e8f0;border-radius:100px;height:10px;overflow:hidden">
