@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/yunuskargi/confbox/internal/auth"
+	"github.com/yunuskargi/confbox/internal/crypto"
 	"github.com/yunuskargi/confbox/internal/database"
 	"github.com/yunuskargi/confbox/internal/models"
 	"github.com/yunuskargi/confbox/internal/service"
@@ -42,7 +43,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, 200, tokenResponse{AccessToken: "", TokenType: "bearer", Role: user.Role, Requires2FA: true})
 			return
 		}
-		if !auth.ValidateTOTP(body.TOTPCode, user.TOTPSecret.String) {
+		if !auth.ValidateTOTP(body.TOTPCode, crypto.Decrypt(user.TOTPSecret.String)) {
 			uid := user.ID
 			service.LogAction(&uid, user.Username, "login_failed", "auth", user.Username, "Invalid 2FA code", clientIP(r))
 			writeError(w, 401, "Invalid 2FA code")
@@ -122,7 +123,7 @@ func Setup2FA(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	database.DB.Exec("UPDATE users SET totp_secret = ? WHERE id = ?", secret, user.ID)
+	database.DB.Exec("UPDATE users SET totp_secret = ? WHERE id = ?", crypto.Encrypt(secret), user.ID)
 	writeJSON(w, 200, map[string]string{"secret": secret, "qr_code": qrBase64})
 }
 
@@ -142,7 +143,7 @@ func Verify2FA(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 400, "Setup 2FA first")
 		return
 	}
-	if !auth.ValidateTOTP(body.Code, user.TOTPSecret.String) {
+	if !auth.ValidateTOTP(body.Code, crypto.Decrypt(user.TOTPSecret.String)) {
 		writeError(w, 400, "Invalid code")
 		return
 	}

@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/yunuskargi/confbox/internal/crypto"
@@ -110,7 +111,9 @@ func ensureSubFolder(srv *drive.Service, parentID, folderName string) (string, e
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	q := fmt.Sprintf("'%s' in parents and name = '%s' and mimeType = 'application/vnd.google-apps.folder' and trashed = false", parentID, folderName)
+	safeName := strings.ReplaceAll(folderName, `\`, `\\`)
+	safeName = strings.ReplaceAll(safeName, `'`, `\'`)
+	q := fmt.Sprintf("'%s' in parents and name = '%s' and mimeType = 'application/vnd.google-apps.folder' and trashed = false", parentID, safeName)
 	list, err := srv.Files.List().Q(q).Fields("files(id)").Context(ctx).Do()
 	if err != nil {
 		return "", err

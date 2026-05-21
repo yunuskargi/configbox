@@ -46,6 +46,21 @@ func queryStr(r *http.Request, name string) string {
 	return r.URL.Query().Get(name)
 }
 
+func sanitizeFilename(name string) string {
+	// Remove control characters, quotes, and backslashes from filename
+	var clean []byte
+	for _, c := range []byte(name) {
+		if c < 32 || c == '"' || c == '\\' || c == ';' {
+			continue
+		}
+		clean = append(clean, c)
+	}
+	if len(clean) == 0 {
+		return "download"
+	}
+	return string(clean)
+}
+
 func clientIP(r *http.Request) string {
 	if ip := r.Header.Get("X-Real-IP"); ip != "" {
 		return ip

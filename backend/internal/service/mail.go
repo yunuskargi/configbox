@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/yunuskargi/confbox/internal/config"
+	"github.com/yunuskargi/confbox/internal/crypto"
 	"github.com/yunuskargi/confbox/internal/database"
 )
 
@@ -69,7 +70,7 @@ func sendEmail(to, subject, bodyHTML string) error {
 	addr := s["smtp_host"] + ":" + s["smtp_port"]
 	var auth smtp.Auth
 	if s["smtp_username"] != "" {
-		auth = smtp.PlainAuth("", s["smtp_username"], s["smtp_password"], s["smtp_host"])
+		auth = smtp.PlainAuth("", s["smtp_username"], crypto.Decrypt(s["smtp_password"]), s["smtp_host"])
 	}
 
 	recipients := strings.Split(to, ",")

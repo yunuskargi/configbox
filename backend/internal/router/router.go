@@ -42,10 +42,10 @@ func New() http.Handler {
 			r.Use(auth.Middleware)
 			r.Get("/me", handler.Me)
 			r.Post("/logout", handler.Logout)
-			r.Post("/change-password", handler.ChangePassword)
+			r.With(mw.RateLimit).Post("/change-password", handler.ChangePassword)
 			r.Post("/2fa/setup", handler.Setup2FA)
-			r.Post("/2fa/verify", handler.Verify2FA)
-			r.Post("/2fa/disable", handler.Disable2FA)
+			r.With(mw.RateLimit).Post("/2fa/verify", handler.Verify2FA)
+			r.With(mw.RateLimit).Post("/2fa/disable", handler.Disable2FA)
 		})
 	})
 
@@ -69,7 +69,7 @@ func New() http.Handler {
 
 		r.Route("/backups", func(r chi.Router) {
 			r.Get("/", handler.ListBackups)
-			r.Post("/authorize-download", handler.AuthorizeDownload)
+			r.With(mw.RateLimit).Post("/authorize-download", handler.AuthorizeDownload)
 			r.Get("/{id}/download", handler.DownloadBackup)
 			r.Get("/{id}/content", handler.GetBackupContent)
 			r.Get("/diff/{idA}/{idB}", handler.DiffBackups)
@@ -92,6 +92,7 @@ func New() http.Handler {
 		})
 
 		r.Route("/settings", func(r chi.Router) {
+			r.Use(auth.AdminOnly)
 			r.Get("/", handler.GetSettings)
 			r.Put("/", handler.UpdateSettings)
 			r.Get("/smtp", handler.GetSMTP)

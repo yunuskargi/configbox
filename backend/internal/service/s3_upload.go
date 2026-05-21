@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -47,7 +49,52 @@ func getS3Settings() s3Settings {
 	}
 }
 
+func isPrivateIP(host string) bool {
+	// Strip port if present
+	h := host
+	if idx := strings.LastIndex(h, ":"); idx != -1 {
+		h = h[:idx]
+	}
+	// Resolve hostname
+	ips, err := net.LookupIP(h)
+	if err != nil {
+		// If DNS fails, check raw IP
+		ip := net.ParseIP(h)
+		if ip == nil {
+			return false
+		}
+		ips = []net.IP{ip}
+	}
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			return true
+		}
+		// Block cloud metadata endpoints (169.254.169.254)
+		if ip.Equal(net.ParseIP("169.254.169.254")) {
+			return true
+		}
+	}
+	return false
+}
+
+func validateS3Endpoint(endpoint string) error {
+	if endpoint == "" {
+		return fmt.Errorf("endpoint is required")
+	}
+	host := endpoint
+	if idx := strings.Index(host, "://"); idx != -1 {
+		host = host[idx+3:]
+	}
+	if isPrivateIP(host) {
+		return fmt.Errorf("S3 endpoint cannot point to private or internal addresses")
+	}
+	return nil
+}
+
 func newS3Client(s s3Settings) (*minio.Client, error) {
+	if err := validateS3Endpoint(s.Endpoint); err != nil {
+		return nil, err
+	}
 	return minio.New(s.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(s.AccessKey, s.SecretKey, ""),
 		Secure: s.UseSSL,

@@ -140,7 +140,7 @@ func UpdateSMTP(w http.ResponseWriter, r *http.Request) {
 	setSetting("smtp_port", strconv.Itoa(body.Port))
 	setSetting("smtp_username", body.Username)
 	if body.Password != "" && body.Password != "••••••••" {
-		setSetting("smtp_password", body.Password)
+		setSetting("smtp_password", crypto.Encrypt(body.Password))
 	}
 	setSetting("smtp_use_tls", strconv.FormatBool(body.UseTLS))
 	setSetting("smtp_from_email", body.FromEmail)

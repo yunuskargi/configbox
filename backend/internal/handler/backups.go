@@ -183,11 +183,11 @@ func DownloadBackup(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		origName := strings.TrimSuffix(filepath.Base(filePath), ".gz")
-		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", origName))
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, sanitizeFilename(origName)))
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Write(content)
 	} else {
-		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(filePath)))
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, sanitizeFilename(filepath.Base(filePath))))
 		w.Header().Set("Content-Type", "application/octet-stream")
 		http.ServeFile(w, r, filePath)
 	}
