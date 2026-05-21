@@ -112,17 +112,7 @@ Works with AWS S3, MinIO, Cloudflare R2, Backblaze B2, and any S3-compatible pro
 
 ### Google Drive
 
-Uses OAuth2 — backups are stored in your own Google Drive account (no quota issues).
-
-**Setup:**
-1. Create a project in [Google Cloud Console](https://console.cloud.google.com)
-2. Enable the Google Drive API
-3. Create OAuth2 credentials (Desktop App type)
-4. Add your email as a test user in OAuth consent screen
-5. Enter Client ID, Client Secret, and Folder ID in ConfBox
-6. Authorize and paste the code
-
-Backups are organized as `vendor/device_name/` folders inside your specified Drive folder.
+Uses OAuth2 — backups are stored in your own Google Drive account. Setup guide is available in the web UI under **Settings → Remote Backup**.
 
 ### How It Works
 
