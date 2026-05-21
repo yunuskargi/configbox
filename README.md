@@ -102,14 +102,6 @@ ConfBox can automatically upload a copy of each backup to remote storage. Config
 
 Works with AWS S3, MinIO, Cloudflare R2, Backblaze B2, and any S3-compatible provider.
 
-| Setting | Description |
-|---------|-------------|
-| Endpoint | S3 endpoint URL (e.g. `s3.amazonaws.com`) |
-| Bucket | Bucket name |
-| Region | AWS region (optional for non-AWS) |
-| Prefix | Optional path prefix inside the bucket |
-| Access Key / Secret Key | API credentials |
-
 ### Google Drive
 
 Uses OAuth2 — backups are stored in your own Google Drive account. Setup guide is available in the web UI under **Settings → Remote Backup**.
