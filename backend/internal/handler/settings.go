@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"fmt"
+
 	"github.com/yunuskargi/confbox/internal/auth"
 	"github.com/yunuskargi/confbox/internal/crypto"
 	"github.com/yunuskargi/confbox/internal/database"
@@ -81,6 +83,9 @@ func UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	if body.ArchiveAfterDays != nil {
 		setSetting("archive_after_days", strconv.Itoa(*body.ArchiveAfterDays))
 	}
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "update", "settings", "general", "", clientIP(r))
+
 	writeJSON(w, 200, map[string]string{"message": "Settings updated"})
 }
 
@@ -140,6 +145,9 @@ func UpdateSMTP(w http.ResponseWriter, r *http.Request) {
 	setSetting("smtp_use_tls", strconv.FormatBool(body.UseTLS))
 	setSetting("smtp_from_email", body.FromEmail)
 	setSetting("smtp_from_name", body.FromName)
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "update", "settings", "smtp", fmt.Sprintf("Host: %s", body.Host), clientIP(r))
+
 	writeJSON(w, 200, map[string]string{"message": "SMTP settings updated"})
 }
 
@@ -157,9 +165,13 @@ func TestSMTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := service.SendTestEmail(recipients); err != nil {
+		uid := user.ID
+		service.LogAction(&uid, user.Username, "test_smtp", "settings", "smtp", fmt.Sprintf("Failed: %s", err.Error()), clientIP(r))
 		writeError(w, 400, err.Error())
 		return
 	}
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "test_smtp", "settings", "smtp", "Success", clientIP(r))
 	writeJSON(w, 200, map[string]string{"message": "Test email sent"})
 }
 
@@ -205,6 +217,9 @@ func UpdateNotify(w http.ResponseWriter, r *http.Request) {
 	setSetting("notify_on_change", strconv.FormatBool(body.OnChange))
 	setSetting("notify_daily_summary", strconv.FormatBool(body.DailySummary))
 	setSetting("notify_recipients", body.Recipients)
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "update", "settings", "notifications", "", clientIP(r))
+
 	writeJSON(w, 200, map[string]string{"message": "Notification settings updated"})
 }
 
@@ -275,6 +290,10 @@ func UpdateS3(w http.ResponseWriter, r *http.Request) {
 	}
 	setSetting("s3_use_ssl", strconv.FormatBool(body.UseSSL))
 	setSetting("s3_prefix", body.Prefix)
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "update", "settings", "s3",
+		fmt.Sprintf("Enabled: %v, Bucket: %s", body.Enabled, body.Bucket), clientIP(r))
+
 	writeJSON(w, 200, map[string]string{"message": "S3 settings updated"})
 }
 
@@ -286,9 +305,13 @@ func TestS3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := service.TestS3Connection(); err != nil {
+		uid := user.ID
+		service.LogAction(&uid, user.Username, "test_s3", "settings", "s3", fmt.Sprintf("Failed: %s", err.Error()), clientIP(r))
 		writeError(w, 400, err.Error())
 		return
 	}
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "test_s3", "settings", "s3", "Success", clientIP(r))
 	writeJSON(w, 200, map[string]string{"message": "S3 connection successful"})
 }
 
@@ -343,6 +366,10 @@ func UpdateGDrive(w http.ResponseWriter, r *http.Request) {
 		setSetting("gdrive_client_secret", crypto.Encrypt(body.ClientSecret))
 	}
 	setSetting("gdrive_folder_id", body.FolderID)
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "update", "settings", "gdrive",
+		fmt.Sprintf("Enabled: %v", body.Enabled), clientIP(r))
+
 	writeJSON(w, 200, map[string]string{"message": "Google Drive settings updated"})
 }
 
@@ -377,9 +404,13 @@ func GDriveCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := service.ExchangeGDriveCode(body.Code); err != nil {
+		uid := user.ID
+		service.LogAction(&uid, user.Username, "gdrive_auth", "settings", "gdrive", fmt.Sprintf("Failed: %s", err.Error()), clientIP(r))
 		writeError(w, 400, err.Error())
 		return
 	}
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "gdrive_auth", "settings", "gdrive", "Authorized successfully", clientIP(r))
 	writeJSON(w, 200, map[string]string{"message": "Google Drive authorized successfully"})
 }
 
@@ -391,9 +422,13 @@ func TestGDrive(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := service.TestGDriveConnection(); err != nil {
+		uid := user.ID
+		service.LogAction(&uid, user.Username, "test_gdrive", "settings", "gdrive", fmt.Sprintf("Failed: %s", err.Error()), clientIP(r))
 		writeError(w, 400, err.Error())
 		return
 	}
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "test_gdrive", "settings", "gdrive", "Success", clientIP(r))
 	writeJSON(w, 200, map[string]string{"message": "Google Drive connection successful"})
 }
 
@@ -404,5 +439,9 @@ func RunArchive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	service.ArchiveOldBackups()
+
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "archive", "settings", "archive", "Manual archive triggered", clientIP(r))
+
 	writeJSON(w, 200, map[string]string{"message": "Archive completed"})
 }

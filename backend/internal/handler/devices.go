@@ -271,6 +271,7 @@ func TriggerBackup(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestConnection(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUser(r)
 	id := paramInt(r, "id")
 
 	var exists int
@@ -281,6 +282,13 @@ func TestConnection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := service.TestDeviceConnection(id)
+
+	var name string
+	database.DB.Get(&name, "SELECT name FROM devices WHERE id = ?", id)
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "test_connection", "device", name,
+		fmt.Sprintf("Result: %v", result["success"]), clientIP(r))
+
 	writeJSON(w, 200, result)
 }
 
@@ -289,6 +297,7 @@ type scheduleBody struct {
 }
 
 func SetSchedule(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUser(r)
 	id := paramInt(r, "id")
 	var body scheduleBody
 	if err := decodeBody(r, &body); err != nil {
@@ -305,10 +314,18 @@ func SetSchedule(w http.ResponseWriter, r *http.Request) {
 
 	database.DB.Exec("UPDATE devices SET schedule_cron = ?, updated_at = ? WHERE id = ?", body.Cron, config.Now(), id)
 	service.ScheduleDevice(id, body.Cron)
+
+	var name string
+	database.DB.Get(&name, "SELECT name FROM devices WHERE id = ?", id)
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "set_schedule", "device", name,
+		fmt.Sprintf("Cron: %s", body.Cron), clientIP(r))
+
 	writeJSON(w, 200, map[string]string{"message": "Schedule updated", "cron": body.Cron})
 }
 
 func RemoveSchedule(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUser(r)
 	id := paramInt(r, "id")
 	var exists int
 	database.DB.Get(&exists, "SELECT COUNT(*) FROM devices WHERE id = ?", id)
@@ -317,8 +334,15 @@ func RemoveSchedule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var name string
+	database.DB.Get(&name, "SELECT name FROM devices WHERE id = ?", id)
+
 	database.DB.Exec("UPDATE devices SET schedule_cron = NULL, updated_at = ? WHERE id = ?", config.Now(), id)
 	service.RemoveDeviceSchedule(id)
+
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "remove_schedule", "device", name, "", clientIP(r))
+
 	writeJSON(w, 200, map[string]string{"message": "Schedule removed"})
 }
 

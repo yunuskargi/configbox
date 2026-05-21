@@ -7,6 +7,7 @@ import (
 	"github.com/yunuskargi/confbox/internal/config"
 	"github.com/yunuskargi/confbox/internal/database"
 	"github.com/yunuskargi/confbox/internal/models"
+	"github.com/yunuskargi/confbox/internal/service"
 )
 
 func ListLocations(w http.ResponseWriter, r *http.Request) {
@@ -40,6 +41,7 @@ type locationBody struct {
 }
 
 func CreateLocation(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUser(r)
 	var body locationBody
 	if err := decodeBody(r, &body); err != nil {
 		writeError(w, 400, "Invalid request body")
@@ -61,10 +63,15 @@ func CreateLocation(w http.ResponseWriter, r *http.Request) {
 		SELECT l.id, l.name, l.description, l.created_at, COUNT(d.id)
 		FROM locations l LEFT JOIN devices d ON d.location_id = l.id
 		WHERE l.id = ? GROUP BY l.id`, id).Scan(&loc.ID, &loc.Name, &loc.Description, &loc.CreatedAt, &loc.DeviceCount)
+
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "create", "location", body.Name, "", clientIP(r))
+
 	writeJSON(w, 201, loc)
 }
 
 func UpdateLocation(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUser(r)
 	id := paramInt(r, "id")
 	var body locationBody
 	if err := decodeBody(r, &body); err != nil {
@@ -91,6 +98,10 @@ func UpdateLocation(w http.ResponseWriter, r *http.Request) {
 		SELECT l.id, l.name, l.description, l.created_at, COUNT(d.id)
 		FROM locations l LEFT JOIN devices d ON d.location_id = l.id
 		WHERE l.id = ? GROUP BY l.id`, id).Scan(&loc.ID, &loc.Name, &loc.Description, &loc.CreatedAt, &loc.DeviceCount)
+
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "update", "location", loc.Name, "", clientIP(r))
+
 	writeJSON(w, 200, loc)
 }
 
@@ -109,7 +120,14 @@ func DeleteLocation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var locName string
+	database.DB.Get(&locName, "SELECT name FROM locations WHERE id = ?", id)
+
 	database.DB.Exec("UPDATE devices SET location_id = NULL WHERE location_id = ?", id)
 	database.DB.Exec("DELETE FROM locations WHERE id = ?", id)
+
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "delete", "location", locName, "", clientIP(r))
+
 	writeJSON(w, 200, map[string]string{"message": "Location deleted"})
 }

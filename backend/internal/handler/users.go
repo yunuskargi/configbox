@@ -3,10 +3,14 @@ package handler
 import (
 	"net/http"
 
+	"fmt"
+	"strings"
+
 	"github.com/yunuskargi/confbox/internal/auth"
 	"github.com/yunuskargi/confbox/internal/config"
 	"github.com/yunuskargi/confbox/internal/database"
 	"github.com/yunuskargi/confbox/internal/models"
+	"github.com/yunuskargi/confbox/internal/service"
 )
 
 func ListUsers(w http.ResponseWriter, r *http.Request) {
@@ -26,6 +30,7 @@ type userCreateBody struct {
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
+	currentUser := auth.GetUser(r)
 	var body userCreateBody
 	if err := decodeBody(r, &body); err != nil {
 		writeError(w, 400, "Invalid request body")
@@ -57,6 +62,11 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	var user models.User
 	database.DB.Get(&user, "SELECT * FROM users WHERE id = ?", id)
+
+	uid := currentUser.ID
+	service.LogAction(&uid, currentUser.Username, "create", "user", body.Username,
+		fmt.Sprintf("Role: %s", body.Role), clientIP(r))
+
 	writeJSON(w, 201, models.UserOut{ID: user.ID, Username: user.Username, Role: user.Role, TOTPEnabled: user.TOTPEnabled, CreatedAt: user.CreatedAt})
 }
 
@@ -67,6 +77,7 @@ type userUpdateBody struct {
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
+	currentUser := auth.GetUser(r)
 	id := paramInt(r, "id")
 	var body userUpdateBody
 	if err := decodeBody(r, &body); err != nil {
@@ -108,6 +119,21 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	var user models.User
 	database.DB.Get(&user, "SELECT * FROM users WHERE id = ?", id)
+
+	var changes []string
+	if body.Username != nil {
+		changes = append(changes, "username")
+	}
+	if body.Role != nil {
+		changes = append(changes, "role")
+	}
+	if body.Password != nil {
+		changes = append(changes, "password")
+	}
+	uid := currentUser.ID
+	service.LogAction(&uid, currentUser.Username, "update", "user", user.Username,
+		fmt.Sprintf("Changed: %s", strings.Join(changes, ", ")), clientIP(r))
+
 	writeJSON(w, 200, models.UserOut{ID: user.ID, Username: user.Username, Role: user.Role, TOTPEnabled: user.TOTPEnabled, CreatedAt: user.CreatedAt})
 }
 
@@ -127,6 +153,13 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var username string
+	database.DB.Get(&username, "SELECT username FROM users WHERE id = ?", id)
+
 	database.DB.Exec("DELETE FROM users WHERE id = ?", id)
+
+	uid := currentUser.ID
+	service.LogAction(&uid, currentUser.Username, "delete", "user", username, "", clientIP(r))
+
 	writeJSON(w, 200, map[string]string{"message": "User deleted"})
 }

@@ -25,14 +25,16 @@ An alternative to RANCID, Oxidized, and SolarWinds NCM — with a modern dashboa
 - One-click manual backup
 - Config diff / comparison
 - CSV bulk device import
+- **Remote backup to S3 / Google Drive** — automatic copy to cloud storage after each backup
+- **Backup archival** — automatic gzip compression of old backups to save disk space
 - Dashboard statistics and trend charts
 - Location-based device management
-- Email notifications (success/failure/change/daily summary)
+- Email notifications (success/failure/change/daily summary) with remote upload status
 - Dark mode / light mode
 - Multi-language support (English & Turkish)
 - Role-based access control (Admin / Backup Admin)
 - Two-factor authentication (TOTP)
-- Audit log
+- Comprehensive audit log
 - Encrypted credentials (AES-256-CBC)
 - Rate limiting
 - Single binary (~30MB Docker image)
@@ -91,6 +93,43 @@ backups/
 ├── cisco/
 └── paloalto/
 ```
+
+## Remote Backup (S3 / Google Drive)
+
+ConfBox can automatically upload a copy of each backup to remote storage. Configure via **Settings → Remote Backup** in the web UI.
+
+### S3-Compatible Storage
+
+Works with AWS S3, MinIO, Cloudflare R2, Backblaze B2, and any S3-compatible provider.
+
+| Setting | Description |
+|---------|-------------|
+| Endpoint | S3 endpoint URL (e.g. `s3.amazonaws.com`) |
+| Bucket | Bucket name |
+| Region | AWS region (optional for non-AWS) |
+| Prefix | Optional path prefix inside the bucket |
+| Access Key / Secret Key | API credentials |
+
+### Google Drive
+
+Uses OAuth2 — backups are stored in your own Google Drive account (no quota issues).
+
+**Setup:**
+1. Create a project in [Google Cloud Console](https://console.cloud.google.com)
+2. Enable the Google Drive API
+3. Create OAuth2 credentials (Desktop App type)
+4. Add your email as a test user in OAuth consent screen
+5. Enter Client ID, Client Secret, and Folder ID in ConfBox
+6. Authorize and paste the code
+
+Backups are organized as `vendor/device_name/` folders inside your specified Drive folder.
+
+### How It Works
+
+- After each successful backup, ConfBox uploads a copy to all enabled remote providers
+- Remote upload status (success/failure per provider) is included in email notifications
+- Retention/deletion policies only affect local files — remote copies are never deleted
+- Archive (gzip compression) only affects local files — remote copies are the original `.conf`
 
 ## Tech Stack
 

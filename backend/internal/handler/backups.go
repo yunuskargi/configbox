@@ -141,6 +141,12 @@ func AuthorizeDownload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := makeDownloadToken(user.ID, body.BackupID)
+
+	var fileName string
+	database.DB.Get(&fileName, "SELECT file_path FROM backups WHERE id = ?", body.BackupID)
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "download", "backup", filepath.Base(fileName), "", clientIP(r))
+
 	writeJSON(w, 200, map[string]string{"download_token": token})
 }
 

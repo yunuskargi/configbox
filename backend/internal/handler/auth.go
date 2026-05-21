@@ -73,8 +73,11 @@ func Me(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUser(r)
 	token := auth.GetToken(r)
 	auth.BlacklistToken(token)
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "logout", "auth", user.Username, "", clientIP(r))
 	writeJSON(w, 200, map[string]string{"message": "Logged out"})
 }
 
