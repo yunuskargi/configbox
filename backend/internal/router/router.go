@@ -99,6 +99,15 @@ func New() http.Handler {
 			r.Post("/smtp/test", handler.TestSMTP)
 			r.Get("/notify", handler.GetNotify)
 			r.Put("/notify", handler.UpdateNotify)
+			r.Get("/s3", handler.GetS3)
+			r.Put("/s3", handler.UpdateS3)
+			r.Post("/s3/test", handler.TestS3)
+			r.Get("/gdrive", handler.GetGDrive)
+			r.Put("/gdrive", handler.UpdateGDrive)
+			r.Post("/gdrive/auth-url", handler.GDriveAuthURL)
+			r.Post("/gdrive/callback", handler.GDriveCallback)
+			r.Post("/gdrive/test", handler.TestGDrive)
+			r.Post("/archive/run", handler.RunArchive)
 		})
 
 		r.Route("/dashboard", func(r chi.Router) {

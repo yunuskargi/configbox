@@ -3,11 +3,11 @@ import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
 import { useLang } from '../context/LangContext';
-import { Save, Key, HardDrive, FolderOpen, Clock, Info, Palette, ShieldCheck, ShieldOff, Loader2 } from 'lucide-react';
+import { Save, Key, HardDrive, FolderOpen, Clock, Info, Palette, ShieldCheck, ShieldOff, Loader2, CheckCircle } from 'lucide-react';
 
 export default function Settings() {
   const { user, login } = useAuth();
-  const [settings, setSettings] = useState({ backup_dir: '', retention_days: 90, app_title: '' });
+  const [settings, setSettings] = useState({ backup_dir: '', retention_days: 90, app_title: '', archive_enabled: false, archive_after_days: 30 });
   const { refresh: refreshBranding } = useBranding();
   const [passwords, setPasswords] = useState({ current_password: '', new_password: '', confirm: '' });
   const [saving, setSaving] = useState(false);
@@ -66,8 +66,11 @@ export default function Settings() {
       <h1 className="text-2xl font-bold text-gray-800">{t.set_title}</h1>
 
       {toast && (
-        <div className={`p-3 rounded-lg text-sm ${toast.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-          {toast.msg}
+        <div className="fixed top-6 right-6 z-50 animate-[slideIn_0.3s_ease-out]">
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium ${toast.type === 'success' ? 'bg-white border-green-200 text-green-700' : 'bg-white border-red-200 text-red-700'}`}>
+            {toast.type === 'success' ? <CheckCircle size={18} className="text-green-500 shrink-0" /> : <Info size={18} className="text-red-500 shrink-0" />}
+            {toast.msg}
+          </div>
         </div>
       )}
 
@@ -113,6 +116,19 @@ export default function Settings() {
             </label>
             <input type="number" min="1" max="3650" value={settings.retention_days} onChange={(e) => setSettings((s) => ({ ...s, retention_days: Number(e.target.value) }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" />
             <p className="text-xs text-gray-400 mt-1">{t.set_retention_desc}</p>
+          </div>
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+              <input type="checkbox" checked={settings.archive_enabled} onChange={(e) => setSettings((s) => ({ ...s, archive_enabled: e.target.checked }))} className="rounded" />
+              {t.set_archive}
+            </label>
+            {settings.archive_enabled && (
+              <div className="ml-6">
+                <input type="number" min="1" max="3650" value={settings.archive_after_days} onChange={(e) => setSettings((s) => ({ ...s, archive_after_days: Number(e.target.value) }))} className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+                <span className="text-sm text-gray-500 ml-2">{t.set_archive_days}</span>
+                <p className="text-xs text-gray-400 mt-1">{t.set_archive_desc}</p>
+              </div>
+            )}
           </div>
           <button type="submit" disabled={saving} className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white text-sm rounded-lg hover:bg-cyan-700 disabled:opacity-50">
             <Save size={14} /> {saving ? t.saving : t.save}

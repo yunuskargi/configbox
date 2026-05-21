@@ -170,9 +170,21 @@ func DownloadBackup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(filePath)))
-	w.Header().Set("Content-Type", "application/octet-stream")
-	http.ServeFile(w, r, filePath)
+	if strings.HasSuffix(filePath, ".gz") {
+		content, err := service.ReadBackupFile(filePath)
+		if err != nil {
+			writeError(w, 500, "Failed to read backup file")
+			return
+		}
+		origName := strings.TrimSuffix(filepath.Base(filePath), ".gz")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", origName))
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Write(content)
+	} else {
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(filePath)))
+		w.Header().Set("Content-Type", "application/octet-stream")
+		http.ServeFile(w, r, filePath)
+	}
 }
 
 const maxContentViewSize = 10 * 1024 * 1024 // 10MB
@@ -203,7 +215,7 @@ func GetBackupContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, _ := os.ReadFile(filePath)
+	content, _ := service.ReadBackupFile(filePath)
 	writeJSON(w, 200, map[string]any{"content": string(content), "file_path": filePath, "file_size": fileSize})
 }
 
@@ -238,8 +250,8 @@ func DiffBackups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contentA, _ := os.ReadFile(pathA)
-	contentB, _ := os.ReadFile(pathB)
+	contentA, _ := service.ReadBackupFile(pathA)
+	contentB, _ := service.ReadBackupFile(pathB)
 
 	diff := difflib.UnifiedDiff{
 		A:        difflib.SplitLines(string(contentA)),

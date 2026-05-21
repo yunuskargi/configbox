@@ -1,6 +1,8 @@
 package service
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"log/slog"
 	"os"
@@ -39,6 +41,7 @@ func StartScheduler() {
 
 	scheduler.AddFunc("0 3 * * *", func() {
 		CleanupOldBackups()
+		ArchiveOldBackups()
 	})
 
 	scheduler.Start()
@@ -105,6 +108,65 @@ func CleanupOldBackups() {
 		database.DB.Exec("DELETE FROM backups WHERE id = ?", b.ID)
 	}
 	slog.Info("retention cleanup", "deleted", len(old), "retention_days", days)
+}
+
+func ArchiveOldBackups() {
+	var val *string
+	err := database.DB.Get(&val, "SELECT value FROM settings WHERE key = 'archive_after_days'")
+	if err != nil || val == nil {
+		return
+	}
+	days, _ := strconv.Atoi(*val)
+	if days <= 0 {
+		return
+	}
+
+	var enabled *string
+	database.DB.Get(&enabled, "SELECT value FROM settings WHERE key = 'archive_enabled'")
+	if enabled == nil || *enabled != "true" {
+		return
+	}
+
+	cutoff := time.Now().In(config.AppTimezone).AddDate(0, 0, -days).Format("2006-01-02 15:04:05")
+	type row struct {
+		ID       int    `db:"id"`
+		FilePath string `db:"file_path"`
+	}
+	var candidates []row
+	database.DB.Select(&candidates, "SELECT id, file_path FROM backups WHERE created_at < ? AND status = 'success'", cutoff)
+
+	archived := 0
+	for _, b := range candidates {
+		if b.FilePath == "" || strings.HasSuffix(b.FilePath, ".gz") {
+			continue
+		}
+		if _, err := os.Stat(b.FilePath); os.IsNotExist(err) {
+			continue
+		}
+
+		data, err := os.ReadFile(b.FilePath)
+		if err != nil {
+			continue
+		}
+
+		gzPath := b.FilePath + ".gz"
+		var buf bytes.Buffer
+		gw := gzip.NewWriter(&buf)
+		gw.Write(data)
+		gw.Close()
+
+		if err := os.WriteFile(gzPath, buf.Bytes(), 0600); err != nil {
+			continue
+		}
+
+		os.Remove(b.FilePath)
+		database.DB.Exec("UPDATE backups SET file_path = ?, file_size = ? WHERE id = ?", gzPath, buf.Len(), b.ID)
+		archived++
+	}
+
+	if archived > 0 {
+		slog.Info("archive completed", "archived", archived, "older_than_days", days)
+	}
 }
 
 func RemoveDeviceSchedule(deviceID int) {

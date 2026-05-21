@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Server, Database, Settings, ChevronLeft, ChevronRight, LogOut, Box, MapPin, Users, Mail, Shield, Moon, Sun, Globe } from 'lucide-react';
+import { LayoutDashboard, Server, Database, Settings, ChevronLeft, ChevronRight, LogOut, Box, MapPin, Users, Mail, Shield, Moon, Sun, Globe, CloudUpload } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
@@ -21,6 +21,7 @@ export default function Sidebar() {
     ...(user?.role === 'admin' ? [
       { to: '/users', label: t.sidebar_users, icon: Users },
       { to: '/smtp', label: t.sidebar_mail, icon: Mail },
+      { to: '/remote-backup', label: t.sidebar_remote_backup, icon: CloudUpload },
       { to: '/audit', label: t.sidebar_audit, icon: Shield },
     ] : []),
     { to: '/settings', label: t.sidebar_settings, icon: Settings },

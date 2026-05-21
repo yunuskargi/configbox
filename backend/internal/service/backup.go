@@ -144,7 +144,7 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 			VALUES (?, ?, 0, 'failed', ?, ?, ?)`, device.ID, filePath, fetchErr.Error(), triggeredBy, config.Now())
 
 		go func() {
-			NotifyBackup(device.Name, device.Vendor, "failed", fetchErr.Error(), "", 0, device.LocationName, device.Vdom, triggeredBy)
+			NotifyBackup(device.Name, device.Vendor, "failed", fetchErr.Error(), "", 0, device.LocationName, device.Vdom, triggeredBy, RemoteResult{})
 		}()
 
 		return map[string]any{"status": "failed", "error": "Backup failed. Check backup history for details."}
@@ -169,7 +169,14 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 		VALUES (?, ?, ?, 'success', ?, ?)`, device.ID, filePath, fileSize, triggeredBy, config.Now())
 
 	go func() {
-		NotifyBackup(device.Name, device.Vendor, "success", "", filePath, fileSize, device.LocationName, device.Vdom, triggeredBy)
+		defer func() {
+			if r := recover(); r != nil {
+				slog.Error("panic in post-backup goroutine", "error", r)
+			}
+		}()
+		remote := UploadToRemoteStorages(filePath, device.Vendor, device.Name)
+		slog.Info("sending backup notification email", "device", device.Name, "status", "success")
+		NotifyBackup(device.Name, device.Vendor, "success", "", filePath, fileSize, device.LocationName, device.Vdom, triggeredBy, remote)
 		if configChanged {
 			NotifyConfigChange(device.Name, device.Vendor, device.LocationName, device.Vdom)
 		}

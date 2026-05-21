@@ -175,7 +175,7 @@ func SendTestEmail(to string) error {
 	return sendEmail(to, "ConfBox - Test Email - Connection Successful", body)
 }
 
-func NotifyBackup(deviceName, vendor, status, errMsg, filePath string, fileSize int, location, vdom, triggeredBy string) {
+func NotifyBackup(deviceName, vendor, status, errMsg, filePath string, fileSize int, location, vdom, triggeredBy string, remote RemoteResult) {
 	notify := getNotifySettings()
 	recipients := notify["notify_recipients"]
 	if recipients == "" {
@@ -215,6 +215,26 @@ func NotifyBackup(deviceName, vendor, status, errMsg, filePath string, fileSize 
 		}
 	}
 	content.WriteString(`</table>`)
+
+	if status == "success" && (remote.S3Enabled || remote.GDriveEnabled) {
+		content.WriteString(`<div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px 20px;margin-top:16px">
+<p style="margin:0 0 10px;font-size:12px;font-weight:600;color:#0e7490;text-transform:uppercase;letter-spacing:0.5px">Remote Backup</p>`)
+		if remote.S3Enabled {
+			if remote.S3OK {
+				content.WriteString(`<p style="margin:0 0 4px;font-size:13px;color:#166534">✅ S3 — Uploaded successfully</p>`)
+			} else {
+				content.WriteString(fmt.Sprintf(`<p style="margin:0 0 4px;font-size:13px;color:#991b1b">❌ S3 — %s</p>`, html.EscapeString(remote.S3Error)))
+			}
+		}
+		if remote.GDriveEnabled {
+			if remote.GDriveOK {
+				content.WriteString(`<p style="margin:0;font-size:13px;color:#166534">✅ Google Drive — Uploaded successfully</p>`)
+			} else {
+				content.WriteString(fmt.Sprintf(`<p style="margin:0;font-size:13px;color:#991b1b">❌ Google Drive — %s</p>`, html.EscapeString(remote.GDriveError)))
+			}
+		}
+		content.WriteString(`</div>`)
+	}
 
 	if status == "failed" && errMsg != "" {
 		content.WriteString(fmt.Sprintf(`<div style="background-color:#fef2f2;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:8px;padding:16px 20px;margin-top:16px">

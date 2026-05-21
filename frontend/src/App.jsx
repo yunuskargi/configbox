@@ -9,6 +9,7 @@ import Users from './pages/Users';
 import SmtpSettings from './pages/SmtpSettings';
 import Settings from './pages/Settings';
 import AuditLog from './pages/AuditLog';
+import RemoteBackup from './pages/RemoteBackup';
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/locations" element={<Locations />} />
         <Route path="/users" element={<Users />} />
         <Route path="/smtp" element={<SmtpSettings />} />
+        <Route path="/remote-backup" element={<RemoteBackup />} />
         <Route path="/audit" element={<AuditLog />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
