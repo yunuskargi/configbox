@@ -96,22 +96,7 @@ backups/
 
 ## Remote Backup (S3 / Google Drive)
 
-ConfBox can automatically upload a copy of each backup to remote storage. Configure via **Settings → Remote Backup** in the web UI.
-
-### S3-Compatible Storage
-
-Works with AWS S3, MinIO, Cloudflare R2, Backblaze B2, and any S3-compatible provider.
-
-### Google Drive
-
-Uses OAuth2 — backups are stored in your own Google Drive account. Setup guide is available in the web UI under **Settings → Remote Backup**.
-
-### How It Works
-
-- After each successful backup, ConfBox uploads a copy to all enabled remote providers
-- Remote upload status (success/failure per provider) is included in email notifications
-- Retention/deletion policies only affect local files — remote copies are never deleted
-- Archive (gzip compression) only affects local files — remote copies are the original `.conf`
+ConfBox can automatically upload a copy of each backup to S3-compatible storage (AWS, MinIO, Cloudflare R2, Backblaze B2) or Google Drive. Configure via **Settings → Remote Backup** in the web UI — setup guides are included.
 
 ## Tech Stack
 
