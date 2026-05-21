@@ -50,11 +50,15 @@ func getS3Settings() s3Settings {
 }
 
 func isPrivateIP(host string) bool {
-	// Strip port if present
-	h := host
-	if idx := strings.LastIndex(h, ":"); idx != -1 {
-		h = h[:idx]
+	// Strip port using net.SplitHostPort (handles IPv6 brackets)
+	h, _, err := net.SplitHostPort(host)
+	if err != nil {
+		h = host // no port
 	}
+	// Remove IPv6 brackets if still present
+	h = strings.TrimPrefix(h, "[")
+	h = strings.TrimSuffix(h, "]")
+
 	// Resolve hostname
 	ips, err := net.LookupIP(h)
 	if err != nil {

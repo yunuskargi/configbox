@@ -70,16 +70,14 @@ func verifyAndConsumeDownloadToken(token string, backupID int) bool {
 		return false
 	}
 
-	// Single-use: check if already consumed
+	// Single-use: atomic insert, reject if already consumed
 	th := downloadTokenHash(token)
-	var used int
-	database.DB.Get(&used, "SELECT COUNT(*) FROM used_download_tokens WHERE token_hash = ?", th)
-	if used > 0 {
+	result, err := database.DB.Exec("INSERT OR IGNORE INTO used_download_tokens (token_hash) VALUES (?)", th)
+	if err != nil {
 		return false
 	}
-	database.DB.Exec("INSERT INTO used_download_tokens (token_hash) VALUES (?)", th)
-
-	return true
+	affected, _ := result.RowsAffected()
+	return affected > 0
 }
 
 func ListBackups(w http.ResponseWriter, r *http.Request) {
@@ -249,13 +247,14 @@ func DiffBackups(w http.ResponseWriter, r *http.Request) {
 
 	var pathA, pathB string
 	var nameA, nameB, createdA, createdB string
+	var sizeA, sizeB int
 
-	err := database.DB.QueryRow(`SELECT b.file_path, d.name, b.created_at FROM backups b JOIN devices d ON d.id = b.device_id WHERE b.id = ?`, idA).Scan(&pathA, &nameA, &createdA)
+	err := database.DB.QueryRow(`SELECT b.file_path, b.file_size, d.name, b.created_at FROM backups b JOIN devices d ON d.id = b.device_id WHERE b.id = ?`, idA).Scan(&pathA, &sizeA, &nameA, &createdA)
 	if err != nil {
 		writeError(w, 404, "Backup not found")
 		return
 	}
-	err = database.DB.QueryRow(`SELECT b.file_path, d.name, b.created_at FROM backups b JOIN devices d ON d.id = b.device_id WHERE b.id = ?`, idB).Scan(&pathB, &nameB, &createdB)
+	err = database.DB.QueryRow(`SELECT b.file_path, b.file_size, d.name, b.created_at FROM backups b JOIN devices d ON d.id = b.device_id WHERE b.id = ?`, idB).Scan(&pathB, &sizeB, &nameB, &createdB)
 	if err != nil {
 		writeError(w, 404, "Backup not found")
 		return
@@ -263,6 +262,10 @@ func DiffBackups(w http.ResponseWriter, r *http.Request) {
 
 	if !isPathSafe(pathA) || !isPathSafe(pathB) {
 		writeError(w, 403, "Access denied")
+		return
+	}
+	if sizeA > maxContentViewSize || sizeB > maxContentViewSize {
+		writeError(w, 413, "File too large for diff comparison")
 		return
 	}
 	if _, err := os.Stat(pathA); os.IsNotExist(err) {

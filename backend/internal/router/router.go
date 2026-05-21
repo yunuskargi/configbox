@@ -79,9 +79,9 @@ func New() http.Handler {
 
 		r.Route("/locations", func(r chi.Router) {
 			r.Get("/", handler.ListLocations)
-			r.Post("/", handler.CreateLocation)
-			r.Put("/{id}", handler.UpdateLocation)
-			r.Delete("/{id}", handler.DeleteLocation)
+			r.With(auth.AdminOnly).Post("/", handler.CreateLocation)
+			r.With(auth.AdminOnly).Put("/{id}", handler.UpdateLocation)
+			r.With(auth.AdminOnly).Delete("/{id}", handler.DeleteLocation)
 		})
 
 		r.Route("/users", func(r chi.Router) {

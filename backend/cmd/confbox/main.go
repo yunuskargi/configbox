@@ -35,6 +35,7 @@ func main() {
 	service.StartScheduler()
 	defer service.ShutdownScheduler()
 
+	auth.CleanupBlacklist() // cleanup on startup
 	go func() {
 		for {
 			time.Sleep(30 * time.Minute)
