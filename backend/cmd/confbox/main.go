@@ -76,7 +76,7 @@ func seedAdmin() {
 		return
 	}
 	hash, _ := auth.HashPassword(config.DefaultPassword)
-	database.DB.Exec("INSERT INTO users (username, password_hash, role, created_at) VALUES (?, ?, 'admin', datetime('now'))",
+	database.DB.Exec("INSERT INTO users (username, password_hash, role, must_change_password, created_at) VALUES (?, ?, 'admin', 1, datetime('now'))",
 		config.DefaultAdmin, hash)
 	slog.Info("admin user created", "username", config.DefaultAdmin)
 }

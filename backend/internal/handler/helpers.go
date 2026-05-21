@@ -3,10 +3,14 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
+
+var trustedProxy = os.Getenv("TRUSTED_PROXY")
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -62,11 +66,19 @@ func sanitizeFilename(name string) string {
 }
 
 func clientIP(r *http.Request) string {
-	if ip := r.Header.Get("X-Real-IP"); ip != "" {
-		return ip
-	}
-	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
-		return ip
+	if trustedProxy != "" {
+		remoteIP := r.RemoteAddr
+		if idx := strings.LastIndex(remoteIP, ":"); idx != -1 {
+			remoteIP = remoteIP[:idx]
+		}
+		if remoteIP == trustedProxy || remoteIP == "127.0.0.1" || remoteIP == "::1" {
+			if ip := r.Header.Get("X-Real-IP"); ip != "" {
+				return ip
+			}
+			if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
+				return strings.TrimSpace(strings.Split(ip, ",")[0])
+			}
+		}
 	}
 	return r.RemoteAddr
 }

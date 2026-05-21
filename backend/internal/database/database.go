@@ -29,6 +29,21 @@ func Close() {
 	}
 }
 
+func migrate() {
+	// Add must_change_password column if not exists
+	var colExists int
+	DB.Get(&colExists, "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name = 'must_change_password'")
+	if colExists == 0 {
+		DB.Exec("ALTER TABLE users ADD COLUMN must_change_password INTEGER DEFAULT 0")
+	}
+
+	// Add used_download_tokens table if not exists
+	DB.Exec(`CREATE TABLE IF NOT EXISTS used_download_tokens (
+		token_hash TEXT PRIMARY KEY,
+		used_at TEXT DEFAULT (datetime('now'))
+	)`)
+}
+
 func createTables() {
 	schema := `
 	CREATE TABLE IF NOT EXISTS users (
@@ -38,6 +53,7 @@ func createTables() {
 		role TEXT NOT NULL DEFAULT 'admin',
 		totp_secret TEXT,
 		totp_enabled INTEGER DEFAULT 0,
+		must_change_password INTEGER DEFAULT 0,
 		created_at TEXT DEFAULT (datetime('now'))
 	);
 
@@ -100,6 +116,11 @@ func createTables() {
 		expires_at INTEGER NOT NULL
 	);
 
+	CREATE TABLE IF NOT EXISTS used_download_tokens (
+		token_hash TEXT PRIMARY KEY,
+		used_at TEXT DEFAULT (datetime('now'))
+	);
+
 	CREATE INDEX IF NOT EXISTS idx_backups_device_id ON backups(device_id);
 	CREATE INDEX IF NOT EXISTS idx_backups_created_at ON backups(created_at);
 	CREATE INDEX IF NOT EXISTS idx_backups_status ON backups(status);
@@ -107,4 +128,5 @@ func createTables() {
 	CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
 	`
 	DB.MustExec(schema)
+	migrate()
 }

@@ -17,10 +17,11 @@ type loginRequest struct {
 }
 
 type tokenResponse struct {
-	AccessToken string `json:"access_token"`
-	TokenType   string `json:"token_type"`
-	Role        string `json:"role"`
-	Requires2FA bool   `json:"requires_2fa"`
+	AccessToken        string `json:"access_token"`
+	TokenType          string `json:"token_type"`
+	Role               string `json:"role"`
+	Requires2FA        bool   `json:"requires_2fa"`
+	MustChangePassword bool   `json:"must_change_password"`
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -59,17 +60,18 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	uid := user.ID
 	service.LogAction(&uid, user.Username, "login", "auth", user.Username, "Successful login", clientIP(r))
-	writeJSON(w, 200, tokenResponse{AccessToken: token, TokenType: "bearer", Role: user.Role, Requires2FA: false})
+	writeJSON(w, 200, tokenResponse{AccessToken: token, TokenType: "bearer", Role: user.Role, Requires2FA: false, MustChangePassword: user.MustChangePassword})
 }
 
 func Me(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetUser(r)
 	writeJSON(w, 200, models.UserOut{
-		ID:          user.ID,
-		Username:    user.Username,
-		Role:        user.Role,
-		TOTPEnabled: user.TOTPEnabled,
-		CreatedAt:   user.CreatedAt,
+		ID:                 user.ID,
+		Username:           user.Username,
+		Role:               user.Role,
+		TOTPEnabled:        user.TOTPEnabled,
+		MustChangePassword: user.MustChangePassword,
+		CreatedAt:          user.CreatedAt,
 	})
 }
 
@@ -104,7 +106,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	hash, _ := auth.HashPassword(body.NewPassword)
-	database.DB.Exec("UPDATE users SET password_hash = ? WHERE id = ?", hash, user.ID)
+	database.DB.Exec("UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?", hash, user.ID)
 	uid := user.ID
 	service.LogAction(&uid, user.Username, "update", "auth", user.Username, "Password changed", clientIP(r))
 	writeJSON(w, 200, map[string]string{"message": "Password changed"})

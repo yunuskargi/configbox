@@ -3,10 +3,10 @@ import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
 import { useLang } from '../context/LangContext';
-import { Save, Key, HardDrive, FolderOpen, Clock, Info, Palette, ShieldCheck, ShieldOff, Loader2, CheckCircle } from 'lucide-react';
+import { Save, Key, HardDrive, FolderOpen, Clock, Info, Palette, ShieldCheck, ShieldOff, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function Settings() {
-  const { user, login } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [settings, setSettings] = useState({ backup_dir: '', retention_days: 90, app_title: '', archive_enabled: false, archive_after_days: 30 });
   const { refresh: refreshBranding } = useBranding();
   const [passwords, setPasswords] = useState({ current_password: '', new_password: '', confirm: '' });
@@ -56,6 +56,8 @@ export default function Settings() {
       });
       showToast(t.set_password_changed);
       setPasswords({ current_password: '', new_password: '', confirm: '' });
+      // Refresh user context to clear must_change_password flag
+      await refreshUser();
     } catch (err) {
       showToast(err.response?.data?.detail || t.error_occurred, 'error');
     }
@@ -64,6 +66,13 @@ export default function Settings() {
   return (
     <div className="space-y-6 max-w-2xl">
       <h1 className="text-2xl font-bold text-gray-800">{t.set_title}</h1>
+
+      {user?.must_change_password && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm font-medium">
+          <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+          {t.set_must_change_password || 'You must change your password before continuing.'}
+        </div>
+      )}
 
       {toast && (
         <div className="fixed top-6 right-6 z-50 animate-[slideIn_0.3s_ease-out]">

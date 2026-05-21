@@ -5,13 +5,14 @@ import (
 )
 
 type User struct {
-	ID           int            `db:"id" json:"id"`
-	Username     string         `db:"username" json:"username"`
-	PasswordHash string         `db:"password_hash" json:"-"`
-	Role         string         `db:"role" json:"role"`
-	TOTPSecret   sql.NullString `db:"totp_secret" json:"-"`
-	TOTPEnabled  bool           `db:"totp_enabled" json:"totp_enabled"`
-	CreatedAt    string         `db:"created_at" json:"created_at"`
+	ID                 int            `db:"id" json:"id"`
+	Username           string         `db:"username" json:"username"`
+	PasswordHash       string         `db:"password_hash" json:"-"`
+	Role               string         `db:"role" json:"role"`
+	TOTPSecret         sql.NullString `db:"totp_secret" json:"-"`
+	TOTPEnabled        bool           `db:"totp_enabled" json:"totp_enabled"`
+	MustChangePassword bool           `db:"must_change_password" json:"must_change_password"`
+	CreatedAt          string         `db:"created_at" json:"created_at"`
 }
 
 type Location struct {
@@ -71,11 +72,12 @@ type Setting struct {
 // Response DTOs
 
 type UserOut struct {
-	ID          int    `json:"id"`
-	Username    string `json:"username"`
-	Role        string `json:"role"`
-	TOTPEnabled bool   `json:"totp_enabled"`
-	CreatedAt   string `json:"created_at"`
+	ID                 int    `json:"id"`
+	Username           string `json:"username"`
+	Role               string `json:"role"`
+	TOTPEnabled        bool   `json:"totp_enabled"`
+	MustChangePassword bool   `json:"must_change_password"`
+	CreatedAt          string `json:"created_at"`
 }
 
 type LocationOut struct {

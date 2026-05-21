@@ -42,6 +42,8 @@ func StartScheduler() {
 	scheduler.AddFunc("0 3 * * *", func() {
 		CleanupOldBackups()
 		ArchiveOldBackups()
+		// Cleanup expired download tokens (older than 1 hour)
+		database.DB.Exec("DELETE FROM used_download_tokens WHERE used_at < datetime('now', '-1 hour')")
 	})
 
 	scheduler.Start()

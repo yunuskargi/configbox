@@ -18,7 +18,7 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 	database.DB.Select(&users, "SELECT * FROM users ORDER BY username")
 	result := make([]models.UserOut, len(users))
 	for i, u := range users {
-		result[i] = models.UserOut{ID: u.ID, Username: u.Username, Role: u.Role, TOTPEnabled: u.TOTPEnabled, CreatedAt: u.CreatedAt}
+		result[i] = models.UserOut{ID: u.ID, Username: u.Username, Role: u.Role, TOTPEnabled: u.TOTPEnabled, MustChangePassword: u.MustChangePassword, CreatedAt: u.CreatedAt}
 	}
 	writeJSON(w, 200, result)
 }

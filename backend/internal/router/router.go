@@ -16,6 +16,7 @@ func New() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(mw.SecurityHeaders)
+	r.Use(mw.BodyLimit)
 
 	origins := config.CORSOrigins
 	if len(origins) == 0 {

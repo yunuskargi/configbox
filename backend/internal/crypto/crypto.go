@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"log/slog"
 
 	"github.com/yunuskargi/confbox/internal/config"
 )
@@ -13,7 +14,7 @@ import (
 var key []byte
 
 func Init() {
-	h := sha256.Sum256([]byte(config.JWTSecret))
+	h := sha256.Sum256([]byte(config.EncryptionKey))
 	key = h[:]
 }
 
@@ -24,6 +25,7 @@ func Encrypt(plaintext string) string {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
+		slog.Error("crypto: failed to create cipher for encryption", "error", err)
 		return plaintext
 	}
 
@@ -47,10 +49,12 @@ func Decrypt(ciphertext string) string {
 
 	raw, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
+		slog.Warn("crypto: failed to base64 decode, returning as-is (may be plaintext)")
 		return ciphertext
 	}
 
 	if len(raw) < 32 {
+		slog.Warn("crypto: ciphertext too short, returning as-is (may be plaintext)")
 		return ciphertext
 	}
 
@@ -59,6 +63,7 @@ func Decrypt(ciphertext string) string {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
+		slog.Error("crypto: failed to create cipher for decryption", "error", err)
 		return ciphertext
 	}
 
@@ -68,6 +73,7 @@ func Decrypt(ciphertext string) string {
 
 	unpadded, err := pkcs7Unpad(plainBytes, aes.BlockSize)
 	if err != nil {
+		slog.Warn("crypto: unpad failed, data may be corrupted or wrong key")
 		return ciphertext
 	}
 

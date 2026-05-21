@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/yunuskargi/confbox/internal/auth"
 	"github.com/yunuskargi/confbox/internal/crypto"
@@ -69,7 +71,12 @@ func UpdateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if body.BackupDir != nil {
-		setSetting("backup_dir", *body.BackupDir)
+		dir := *body.BackupDir
+		if !filepath.IsAbs(dir) || strings.Contains(dir, "..") {
+			writeError(w, 400, "Backup directory must be an absolute path without '..'")
+			return
+		}
+		setSetting("backup_dir", dir)
 	}
 	if body.RetentionDays != nil {
 		setSetting("retention_days", strconv.Itoa(*body.RetentionDays))

@@ -40,7 +40,12 @@ func makeDownloadToken(userID, backupID int) string {
 	return fmt.Sprintf("%s:%s", msg, sig)
 }
 
-func verifyDownloadToken(token string, backupID int) bool {
+func downloadTokenHash(token string) string {
+	h := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(h[:])
+}
+
+func verifyAndConsumeDownloadToken(token string, backupID int) bool {
 	parts := strings.Split(token, ":")
 	if len(parts) != 4 {
 		return false
@@ -61,7 +66,20 @@ func verifyDownloadToken(token string, backupID int) bool {
 	mac := hmac.New(sha256.New, []byte(config.JWTSecret))
 	mac.Write([]byte(msg))
 	expected := hex.EncodeToString(mac.Sum(nil))
-	return hmac.Equal([]byte(sig), []byte(expected))
+	if !hmac.Equal([]byte(sig), []byte(expected)) {
+		return false
+	}
+
+	// Single-use: check if already consumed
+	th := downloadTokenHash(token)
+	var used int
+	database.DB.Get(&used, "SELECT COUNT(*) FROM used_download_tokens WHERE token_hash = ?", th)
+	if used > 0 {
+		return false
+	}
+	database.DB.Exec("INSERT INTO used_download_tokens (token_hash) VALUES (?)", th)
+
+	return true
 }
 
 func ListBackups(w http.ResponseWriter, r *http.Request) {
@@ -154,7 +172,7 @@ func DownloadBackup(w http.ResponseWriter, r *http.Request) {
 	id := paramInt(r, "id")
 	token := queryStr(r, "token")
 
-	if !verifyDownloadToken(token, id) {
+	if !verifyAndConsumeDownloadToken(token, id) {
 		writeError(w, 403, "Invalid or expired download token")
 		return
 	}

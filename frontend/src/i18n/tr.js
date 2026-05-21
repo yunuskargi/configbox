@@ -233,6 +233,7 @@ export default {
   set_2fa_activated: '2FA başarıyla aktif edildi',
   set_2fa_invalid: 'Geçersiz kod',
   set_2fa_processing: 'İşleniyor...',
+  set_must_change_password: 'Devam etmeden önce varsayılan şifrenizi değiştirmeniz gerekmektedir. Lütfen aşağıdan yeni bir şifre belirleyin.',
   set_reset_title: 'Sıfırlama',
   set_reset_desc: 'Şifrenizi unutursanız sunucu üzerinden sıfırlayabilirsiniz:',
 

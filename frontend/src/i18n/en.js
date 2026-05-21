@@ -233,6 +233,7 @@ export default {
   set_2fa_activated: '2FA activated successfully',
   set_2fa_invalid: 'Invalid code',
   set_2fa_processing: 'Processing...',
+  set_must_change_password: 'You must change your default password before continuing. Please set a new password below.',
   set_reset_title: 'Reset',
   set_reset_desc: 'If you forget your password, you can reset it from the server:',
 

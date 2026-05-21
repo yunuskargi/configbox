@@ -16,6 +16,7 @@ var (
 	BackupDir       string
 	DatabasePath    string
 	JWTSecret       string
+	EncryptionKey   string
 	JWTExpireMin    int
 	TZOffset        int
 	AppTimezone     *time.Location
@@ -41,7 +42,11 @@ func Load() {
 	AppTimezone = loc
 
 	JWTSecret = getJWTSecret(baseDir)
-	JWTExpireMin, _ = strconv.Atoi(getEnv("JWT_EXPIRE_MINUTES", "480"))
+	EncryptionKey = getEnv("ENCRYPTION_KEY", "")
+	if EncryptionKey == "" {
+		EncryptionKey = JWTSecret // backward compatible fallback
+	}
+	JWTExpireMin, _ = strconv.Atoi(getEnv("JWT_EXPIRE_MINUTES", "120"))
 
 	DefaultAdmin = getEnv("DEFAULT_ADMIN_USER", "admin")
 	DefaultPassword = getEnv("DEFAULT_ADMIN_PASS", "admin")

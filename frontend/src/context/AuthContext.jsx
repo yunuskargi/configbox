@@ -32,6 +32,13 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
+  const refreshUser = async () => {
+    try {
+      const me = await api.get('/auth/me');
+      setUser(me.data);
+    } catch { /* ignore */ }
+  };
+
   const logout = () => {
     api.post('/auth/logout').catch(() => {});
     localStorage.removeItem('token');
@@ -39,7 +46,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

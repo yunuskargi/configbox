@@ -2,11 +2,15 @@ package middleware
 
 import (
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
 	"golang.org/x/time/rate"
 )
+
+var trustedProxy = os.Getenv("TRUSTED_PROXY")
 
 type visitor struct {
 	limiter  *rate.Limiter
@@ -50,14 +54,22 @@ func getVisitor(key string) *rate.Limiter {
 }
 
 func extractIP(r *http.Request) string {
-	ip := r.Header.Get("X-Real-IP")
-	if ip == "" {
-		ip = r.Header.Get("X-Forwarded-For")
+	// Only trust proxy headers if TRUSTED_PROXY is configured
+	if trustedProxy != "" {
+		remoteIP := r.RemoteAddr
+		if idx := strings.LastIndex(remoteIP, ":"); idx != -1 {
+			remoteIP = remoteIP[:idx]
+		}
+		if remoteIP == trustedProxy || remoteIP == "127.0.0.1" || remoteIP == "::1" {
+			if ip := r.Header.Get("X-Real-IP"); ip != "" {
+				return ip
+			}
+			if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
+				return strings.TrimSpace(strings.Split(ip, ",")[0])
+			}
+		}
 	}
-	if ip == "" {
-		ip = r.RemoteAddr
-	}
-	return ip
+	return r.RemoteAddr
 }
 
 func RateLimit(next http.Handler) http.Handler {
