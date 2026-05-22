@@ -3,9 +3,9 @@ package handler
 import (
 	"net/http"
 
-	"github.com/yunuskargi/confbox/internal/auth"
-	"github.com/yunuskargi/confbox/internal/database"
-	"github.com/yunuskargi/confbox/internal/models"
+	"github.com/yunuskargi/configbox/internal/auth"
+	"github.com/yunuskargi/configbox/internal/database"
+	"github.com/yunuskargi/configbox/internal/models"
 )
 
 func ListAuditLogs(w http.ResponseWriter, r *http.Request) {

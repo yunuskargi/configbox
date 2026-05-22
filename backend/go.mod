@@ -1,4 +1,4 @@
-module github.com/yunuskargi/confbox
+module github.com/yunuskargi/configbox
 
 go 1.25.0
 

@@ -3,11 +3,11 @@ package handler
 import (
 	"net/http"
 
-	"github.com/yunuskargi/confbox/internal/auth"
-	"github.com/yunuskargi/confbox/internal/crypto"
-	"github.com/yunuskargi/confbox/internal/database"
-	"github.com/yunuskargi/confbox/internal/models"
-	"github.com/yunuskargi/confbox/internal/service"
+	"github.com/yunuskargi/configbox/internal/auth"
+	"github.com/yunuskargi/configbox/internal/crypto"
+	"github.com/yunuskargi/configbox/internal/database"
+	"github.com/yunuskargi/configbox/internal/models"
+	"github.com/yunuskargi/configbox/internal/service"
 )
 
 type loginRequest struct {

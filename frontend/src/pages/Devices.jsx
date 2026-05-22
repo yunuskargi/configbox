@@ -280,7 +280,7 @@ function BulkImportModal({ onClose, onImported, t }) {
     const url = window.URL.createObjectURL(res.data);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'confbox_devices_template.csv';
+    a.download = 'configbox_devices_template.csv';
     a.click();
     window.URL.revokeObjectURL(url);
   };

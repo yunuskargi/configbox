@@ -1,20 +1,20 @@
 services:
   backend:
     build: ./backend
-    container_name: confbox-backend
+    container_name: configbox-backend
     restart: unless-stopped
     env_file: .env
     volumes:
       - ./backups:/data/backups
       - db-data:/data
     environment:
-      - DATABASE_PATH=/data/confbox.db
+      - DATABASE_PATH=/data/configbox.db
       - BACKUP_DIR=/data/backups
       - TZ_OFFSET=3
 
   frontend:
     build: ./frontend
-    container_name: confbox-frontend
+    container_name: configbox-frontend
     restart: unless-stopped
     ports:
       - "6161:80"

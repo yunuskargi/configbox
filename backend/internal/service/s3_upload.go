@@ -12,8 +12,8 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/yunuskargi/confbox/internal/crypto"
-	"github.com/yunuskargi/confbox/internal/database"
+	"github.com/yunuskargi/configbox/internal/crypto"
+	"github.com/yunuskargi/configbox/internal/database"
 )
 
 type s3Settings struct {

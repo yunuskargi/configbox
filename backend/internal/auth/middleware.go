@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/yunuskargi/confbox/internal/database"
-	"github.com/yunuskargi/confbox/internal/models"
+	"github.com/yunuskargi/configbox/internal/database"
+	"github.com/yunuskargi/configbox/internal/models"
 )
 
 type contextKey string

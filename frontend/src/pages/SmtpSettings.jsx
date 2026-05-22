@@ -4,7 +4,7 @@ import { Mail, Bell, Send } from 'lucide-react';
 import { useLang } from '../context/LangContext';
 
 export default function SmtpSettings() {
-  const [smtp, setSmtp] = useState({ smtp_host: '', smtp_port: 587, smtp_username: '', smtp_password: '', smtp_use_tls: true, smtp_from_email: '', smtp_from_name: 'ConfBox' });
+  const [smtp, setSmtp] = useState({ smtp_host: '', smtp_port: 587, smtp_username: '', smtp_password: '', smtp_use_tls: true, smtp_from_email: '', smtp_from_name: 'ConfigBox' });
   const [notify, setNotify] = useState({ notify_on_success: false, notify_on_failure: true, notify_on_change: false, notify_daily_summary: false, notify_recipients: '' });
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -95,7 +95,7 @@ export default function SmtpSettings() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t.smtp_from_email}</label>
-              <input value={smtp.smtp_from_email} onChange={(e) => setSmtp({ ...smtp, smtp_from_email: e.target.value })} placeholder="confbox@company.com" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+              <input value={smtp.smtp_from_email} onChange={(e) => setSmtp({ ...smtp, smtp_from_email: e.target.value })} placeholder="configbox@company.com" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t.smtp_from_name}</label>

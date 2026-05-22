@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/yunuskargi/confbox/internal/config"
-	"github.com/yunuskargi/confbox/internal/database"
-	"github.com/yunuskargi/confbox/internal/models"
+	"github.com/yunuskargi/configbox/internal/config"
+	"github.com/yunuskargi/configbox/internal/database"
+	"github.com/yunuskargi/configbox/internal/models"
 )
 
 func GetDashboardStats(w http.ResponseWriter, r *http.Request) {

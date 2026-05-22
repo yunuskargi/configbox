@@ -6,10 +6,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 
-	"github.com/yunuskargi/confbox/internal/auth"
-	"github.com/yunuskargi/confbox/internal/config"
-	"github.com/yunuskargi/confbox/internal/handler"
-	mw "github.com/yunuskargi/confbox/internal/middleware"
+	"github.com/yunuskargi/configbox/internal/auth"
+	"github.com/yunuskargi/configbox/internal/config"
+	"github.com/yunuskargi/configbox/internal/handler"
+	mw "github.com/yunuskargi/configbox/internal/middleware"
 )
 
 func New() http.Handler {

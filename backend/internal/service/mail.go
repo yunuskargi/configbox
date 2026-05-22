@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yunuskargi/confbox/internal/config"
-	"github.com/yunuskargi/confbox/internal/crypto"
-	"github.com/yunuskargi/confbox/internal/database"
+	"github.com/yunuskargi/configbox/internal/config"
+	"github.com/yunuskargi/configbox/internal/crypto"
+	"github.com/yunuskargi/configbox/internal/database"
 )
 
 func encodeSubject(s string) string {
@@ -23,7 +23,7 @@ func getSmtpSettings() map[string]string {
 	keys := []string{"smtp_host", "smtp_port", "smtp_username", "smtp_password", "smtp_use_tls", "smtp_from_email", "smtp_from_name"}
 	defaults := map[string]string{
 		"smtp_host": "", "smtp_port": "587", "smtp_username": "", "smtp_password": "",
-		"smtp_use_tls": "true", "smtp_from_email": "", "smtp_from_name": "ConfBox",
+		"smtp_use_tls": "true", "smtp_from_email": "", "smtp_from_name": "ConfigBox",
 	}
 	result := make(map[string]string)
 	for _, k := range keys {
@@ -93,7 +93,7 @@ func mailWrapper(title, content string) string {
 <!-- Header -->
 <tr><td style="background:linear-gradient(135deg,#0e7490 0%%,#0891b2 100%%);padding:32px 40px;border-radius:12px 12px 0 0">
 <table width="100%%"><tr>
-<td><span style="font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.5px">ConfBox</span></td>
+<td><span style="font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.5px">ConfigBox</span></td>
 <td align="right"><span style="font-size:12px;color:#cffafe">%s</span></td>
 </tr></table>
 <p style="margin:8px 0 0;font-size:14px;color:#e0f7fa">Network Configuration Backup Manager</p>
@@ -110,7 +110,7 @@ func mailWrapper(title, content string) string {
 <!-- Footer -->
 <tr><td style="background-color:#f0fdfa;padding:20px 40px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none">
 <p style="margin:0;font-size:12px;color:#0e7490;text-align:center">
-This is an automated notification from ConfBox. Do not reply to this email.
+This is an automated notification from ConfigBox. Do not reply to this email.
 </p>
 </td></tr>
 </table>
@@ -173,7 +173,7 @@ func SendTestEmail(to string) error {
 </div>`
 
 	body := mailWrapper("SMTP Test Notification", content)
-	return sendEmail(to, "ConfBox - Test Email - Connection Successful", body)
+	return sendEmail(to, "ConfigBox - Test Email - Connection Successful", body)
 }
 
 func NotifyBackup(deviceName, vendor, status, errMsg, filePath string, fileSize int, location, vdom, triggeredBy string, remote RemoteResult) {
@@ -250,7 +250,7 @@ func NotifyBackup(deviceName, vendor, status, errMsg, filePath string, fileSize 
 	}
 
 	title := fmt.Sprintf("Backup %s - %s", statusText, deviceName)
-	subject := fmt.Sprintf("ConfBox - %s - Backup %s", deviceName, statusText)
+	subject := fmt.Sprintf("ConfigBox - %s - Backup %s", deviceName, statusText)
 	body := mailWrapper(title, content.String())
 
 	if err := sendEmail(recipients, subject, body); err != nil {
@@ -291,11 +291,11 @@ func NotifyConfigChange(deviceName, vendor, location, vdom string) {
 	content.WriteString(`</table>`)
 
 	content.WriteString(`<div style="background-color:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;padding:16px 20px">
-<p style="margin:0;font-size:13px;color:#0e7490">💡 <strong>Tip:</strong> Use the ConfBox dashboard to compare configurations and view the exact changes using the diff viewer.</p>
+<p style="margin:0;font-size:13px;color:#0e7490">💡 <strong>Tip:</strong> Use the ConfigBox dashboard to compare configurations and view the exact changes using the diff viewer.</p>
 </div>`)
 
 	title := fmt.Sprintf("Config Change - %s", deviceName)
-	subject := fmt.Sprintf("ConfBox - %s - Configuration Changed", deviceName)
+	subject := fmt.Sprintf("ConfigBox - %s - Configuration Changed", deviceName)
 	body := mailWrapper(title, content.String())
 
 	if err := sendEmail(recipients, subject, body); err != nil {
@@ -409,7 +409,7 @@ func SendDailySummary() {
 	}
 
 	title := "Daily Backup Summary"
-	subject := fmt.Sprintf("ConfBox - Daily Summary - %s", time.Now().In(config.AppTimezone).Format("02 Jan 2006"))
+	subject := fmt.Sprintf("ConfigBox - Daily Summary - %s", time.Now().In(config.AppTimezone).Format("02 Jan 2006"))
 	body := mailWrapper(title, content.String())
 
 	if err := sendEmail(recipients, subject, body); err != nil {

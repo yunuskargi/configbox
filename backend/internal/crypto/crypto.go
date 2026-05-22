@@ -8,7 +8,7 @@ import (
 	"encoding/base64"
 	"log/slog"
 
-	"github.com/yunuskargi/confbox/internal/config"
+	"github.com/yunuskargi/configbox/internal/config"
 )
 
 var key []byte

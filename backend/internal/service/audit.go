@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/yunuskargi/confbox/internal/config"
-	"github.com/yunuskargi/confbox/internal/database"
+	"github.com/yunuskargi/configbox/internal/config"
+	"github.com/yunuskargi/configbox/internal/database"
 )
 
 func LogAction(userID *int, username, action, resourceType, resourceName, detail, ipAddress string) {

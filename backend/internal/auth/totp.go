@@ -10,7 +10,7 @@ import (
 
 func GenerateTOTP(username string) (secret string, qrBase64 string, err error) {
 	key, err := totp.Generate(totp.GenerateOpts{
-		Issuer:      "ConfBox",
+		Issuer:      "ConfigBox",
 		AccountName: username,
 	})
 	if err != nil {

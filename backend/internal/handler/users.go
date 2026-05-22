@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/yunuskargi/confbox/internal/auth"
-	"github.com/yunuskargi/confbox/internal/config"
-	"github.com/yunuskargi/confbox/internal/database"
-	"github.com/yunuskargi/confbox/internal/models"
-	"github.com/yunuskargi/confbox/internal/service"
+	"github.com/yunuskargi/configbox/internal/auth"
+	"github.com/yunuskargi/configbox/internal/config"
+	"github.com/yunuskargi/configbox/internal/database"
+	"github.com/yunuskargi/configbox/internal/models"
+	"github.com/yunuskargi/configbox/internal/service"
 )
 
 func ListUsers(w http.ResponseWriter, r *http.Request) {

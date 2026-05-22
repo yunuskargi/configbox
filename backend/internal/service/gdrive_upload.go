@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yunuskargi/confbox/internal/crypto"
-	"github.com/yunuskargi/confbox/internal/database"
+	"github.com/yunuskargi/configbox/internal/crypto"
+	"github.com/yunuskargi/configbox/internal/database"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"

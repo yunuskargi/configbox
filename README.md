@@ -1,4 +1,4 @@
-# ConfBox — Network Configuration Backup Manager
+# ConfigBox — Network Configuration Backup Manager
 
 Free, open-source network configuration backup tool for FortiGate, Cisco, Juniper, and Palo Alto devices. Automated config backups with a modern web UI, config diff comparison, email notifications, and Docker deployment in minutes.
 
@@ -8,7 +8,7 @@ An alternative to RANCID, Oxidized, and SolarWinds NCM — with a modern dashboa
 ![License](https://img.shields.io/badge/license-AGPL--3.0-green)
 ![Docker](https://img.shields.io/badge/deploy-Docker%20Compose-blue)
 
-![ConfBox Dashboard](docs/dashboard.png)
+![ConfigBox Dashboard](docs/dashboard.png)
 
 ## Supported Devices
 
@@ -48,8 +48,8 @@ An alternative to RANCID, Oxidized, and SolarWinds NCM — with a modern dashboa
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yunuskargi/confbox.git
-cd confbox
+git clone https://github.com/yunuskargi/configbox.git
+cd configbox
 ```
 
 ### 2. Configure environment variables
@@ -78,7 +78,7 @@ The application will be available at `http://localhost:6161`.
 
 ```bash
 # Reset a user's password
-docker compose exec backend /confbox reset-password <username> <new-password>
+docker compose exec backend /configbox reset-password <username> <new-password>
 ```
 
 ## Backup File Structure
@@ -96,7 +96,7 @@ backups/
 
 ## Remote Backup (S3 / Google Drive)
 
-ConfBox can automatically upload a copy of each backup to S3-compatible storage (AWS, MinIO, Cloudflare R2, Backblaze B2) or Google Drive. Configure via **Settings → Remote Backup** in the web UI — setup guides are included.
+ConfigBox can automatically upload a copy of each backup to S3-compatible storage (AWS, MinIO, Cloudflare R2, Backblaze B2) or Google Drive. Configure via **Settings → Remote Backup** in the web UI — setup guides are included.
 
 ## Tech Stack
 
@@ -119,7 +119,7 @@ Your data is safe during updates:
 ### Update Steps
 
 ```bash
-cd confbox
+cd configbox
 
 # Pull latest source
 git pull
@@ -140,7 +140,7 @@ docker compose up -d --build
 
 - Default login is `admin/admin` — you will be asked to change it on first login
 - All credentials (device passwords, API keys, SMTP) are encrypted in the database
-- If you expose ConfBox to the internet, put a reverse proxy with SSL in front (nginx, Traefik, Caddy)
+- If you expose ConfigBox to the internet, put a reverse proxy with SSL in front (nginx, Traefik, Caddy)
 - See `.env.example` for optional settings like `ENCRYPTION_KEY`, `TRUSTED_PROXY`, and `FORCE_HTTPS`
 
 ## License

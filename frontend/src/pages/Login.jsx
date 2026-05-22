@@ -48,7 +48,7 @@ export default function Login() {
               <Box className="w-9 h-9 text-cyan-400" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-4">ConfBox</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">ConfigBox</h1>
           {appTitle && <p className="text-cyan-300/80 text-base font-medium mb-2">{appTitle}</p>}
           <p className="text-cyan-200/70 text-lg leading-relaxed">{t.login_tagline}</p>
           <p className="text-cyan-300/50 text-sm mt-2">{t.login_description}</p>
@@ -73,7 +73,7 @@ export default function Login() {
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
             <Box className="w-8 h-8 text-cyan-400" />
-            <h1 className="text-2xl font-bold text-white">ConfBox</h1>
+            <h1 className="text-2xl font-bold text-white">ConfigBox</h1>
           </div>
 
           <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 shadow-2xl">

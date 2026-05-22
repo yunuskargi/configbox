@@ -31,7 +31,7 @@ func Load() {
 	baseDir, _ := os.Getwd()
 
 	BackupDir = getEnv("BACKUP_DIR", filepath.Join(baseDir, "..", "backups"))
-	DatabasePath = getEnv("DATABASE_PATH", filepath.Join(baseDir, "confbox.db"))
+	DatabasePath = getEnv("DATABASE_PATH", filepath.Join(baseDir, "configbox.db"))
 
 	tz := getEnv("TZ", "Europe/Istanbul")
 	loc, err := time.LoadLocation(tz)

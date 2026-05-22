@@ -1,4 +1,4 @@
-/confbox
+/configbox
 *.db
 *.db-shm
 *.db-wal

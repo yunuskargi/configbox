@@ -33,7 +33,7 @@ export default function Sidebar() {
         <Box className="w-7 h-7 text-cyan-600 shrink-0" />
         {!collapsed && (
           <div className="min-w-0">
-            <span className="text-lg font-bold text-gray-800 dark:text-gray-100 block leading-tight">ConfBox</span>
+            <span className="text-lg font-bold text-gray-800 dark:text-gray-100 block leading-tight">ConfigBox</span>
             {appTitle && <span className="text-[10px] text-gray-400 block truncate">{appTitle}</span>}
           </div>
         )}
@@ -79,7 +79,7 @@ export default function Sidebar() {
           <LogOut size={20} className="shrink-0" />
           {!collapsed && <span>{t.sidebar_logout}</span>}
         </button>
-        {!collapsed && <p className="text-[10px] text-gray-300 dark:text-gray-600 text-center mt-2">ConfBox v1.0</p>}
+        {!collapsed && <p className="text-[10px] text-gray-300 dark:text-gray-600 text-center mt-2">ConfigBox v1.0</p>}
       </div>
     </aside>
   );

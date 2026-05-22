@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/yunuskargi/confbox/internal/auth"
-	"github.com/yunuskargi/confbox/internal/config"
-	"github.com/yunuskargi/confbox/internal/crypto"
-	"github.com/yunuskargi/confbox/internal/database"
-	"github.com/yunuskargi/confbox/internal/models"
-	"github.com/yunuskargi/confbox/internal/service"
+	"github.com/yunuskargi/configbox/internal/auth"
+	"github.com/yunuskargi/configbox/internal/config"
+	"github.com/yunuskargi/configbox/internal/crypto"
+	"github.com/yunuskargi/configbox/internal/database"
+	"github.com/yunuskargi/configbox/internal/models"
+	"github.com/yunuskargi/configbox/internal/service"
 )
 
 var encryptedFields = []string{"auth_token", "ssh_password", "enable_password"}
@@ -348,7 +348,7 @@ func RemoveSchedule(w http.ResponseWriter, r *http.Request) {
 
 func BulkTemplate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/csv")
-	w.Header().Set("Content-Disposition", "attachment; filename=confbox_devices_template.csv")
+	w.Header().Set("Content-Disposition", "attachment; filename=configbox_devices_template.csv")
 	wr := csv.NewWriter(w)
 	wr.Write([]string{"name", "vendor", "ip_address", "port", "platform", "auth_token", "ssh_username", "ssh_password", "enable_password", "location", "vdom"})
 	wr.Write([]string{"FW-Istanbul", "fortigate", "10.0.1.1", "443", "", "api-key-here", "", "", "", "Istanbul DC", ""})

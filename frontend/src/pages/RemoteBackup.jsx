@@ -147,7 +147,7 @@ export default function RemoteBackup() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.rb_s3_prefix} <span className="text-gray-400 font-normal">({t.optional})</span></label>
-              <input value={s3.s3_prefix} onChange={(e) => setS3({ ...s3, s3_prefix: e.target.value })} placeholder="confbox/" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
+              <input value={s3.s3_prefix} onChange={(e) => setS3({ ...s3, s3_prefix: e.target.value })} placeholder="configbox/" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:bg-gray-700 dark:text-gray-100" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

@@ -7,16 +7,16 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=1 go build -ldflags="-s -w" -o /confbox ./cmd/confbox
+RUN CGO_ENABLED=1 go build -ldflags="-s -w" -o /configbox ./cmd/configbox
 
 FROM alpine:3.20
 RUN apk add --no-cache ca-certificates tzdata su-exec
-RUN addgroup -g 1000 confbox && adduser -D -u 1000 -G confbox confbox
-COPY --from=builder /confbox /confbox
+RUN addgroup -g 1000 configbox && adduser -D -u 1000 -G configbox configbox
+COPY --from=builder /configbox /configbox
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-RUN mkdir -p /data/backups && chown -R confbox:confbox /data
+RUN mkdir -p /data/backups && chown -R configbox:configbox /data
 
 EXPOSE 8000
 ENTRYPOINT ["/entrypoint.sh"]

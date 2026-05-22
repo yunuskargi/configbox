@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yunuskargi/confbox/internal/config"
-	"github.com/yunuskargi/confbox/internal/crypto"
-	"github.com/yunuskargi/confbox/internal/database"
-	vc "github.com/yunuskargi/confbox/internal/vendor_client"
+	"github.com/yunuskargi/configbox/internal/config"
+	"github.com/yunuskargi/configbox/internal/crypto"
+	"github.com/yunuskargi/configbox/internal/database"
+	vc "github.com/yunuskargi/configbox/internal/vendor_client"
 )
 
 type DeviceInfo struct {

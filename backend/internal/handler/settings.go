@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/yunuskargi/confbox/internal/auth"
-	"github.com/yunuskargi/confbox/internal/crypto"
-	"github.com/yunuskargi/confbox/internal/database"
-	"github.com/yunuskargi/confbox/internal/service"
+	"github.com/yunuskargi/configbox/internal/auth"
+	"github.com/yunuskargi/configbox/internal/crypto"
+	"github.com/yunuskargi/configbox/internal/database"
+	"github.com/yunuskargi/configbox/internal/service"
 )
 
 func getSetting(key, def string) string {
@@ -116,7 +116,7 @@ func GetSMTP(w http.ResponseWriter, r *http.Request) {
 		"smtp_password":   maskedPassword,
 		"smtp_use_tls":    getSetting("smtp_use_tls", "true") == "true",
 		"smtp_from_email": getSetting("smtp_from_email", ""),
-		"smtp_from_name":  getSetting("smtp_from_name", "ConfBox"),
+		"smtp_from_name":  getSetting("smtp_from_name", "ConfigBox"),
 	})
 }
 
