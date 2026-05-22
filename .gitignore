@@ -29,5 +29,4 @@ backups/*
 *.swp
 .DS_Store
 
-# Claude Code
 .claude/
