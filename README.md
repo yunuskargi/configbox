@@ -136,13 +136,12 @@ docker compose up -d --build
 
 > **Backup your `.env` file** before updating. If you accidentally lose it, you lose your `JWT_SECRET` and encrypted credentials cannot be recovered.
 
-## Security Notes
+## Security
 
-- **Use a reverse proxy with TLS** in production (nginx, Traefik, Caddy). ConfBox does not terminate TLS itself. Set `FORCE_HTTPS=true` in `.env` to enable HSTS headers when behind TLS.
-- **Default credentials** are `admin/admin`. You will be forced to change your password on first login.
-- All device credentials, SMTP passwords, and API keys are encrypted at rest with AES-256-CBC.
-- Set a separate `ENCRYPTION_KEY` in `.env` for production (if not set, falls back to `JWT_SECRET`).
-- Set `TRUSTED_PROXY` in `.env` if behind a reverse proxy, to ensure accurate IP logging and rate limiting.
+- Default login is `admin/admin` — you will be asked to change it on first login
+- All credentials (device passwords, API keys, SMTP) are encrypted in the database
+- If you expose ConfBox to the internet, put a reverse proxy with SSL in front (nginx, Traefik, Caddy)
+- See `.env.example` for optional settings like `ENCRYPTION_KEY`, `TRUSTED_PROXY`, and `FORCE_HTTPS`
 
 ## License
 

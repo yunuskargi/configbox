@@ -93,7 +93,7 @@ func mailWrapper(title, content string) string {
 <!-- Header -->
 <tr><td style="background:linear-gradient(135deg,#0e7490 0%%,#0891b2 100%%);padding:32px 40px;border-radius:12px 12px 0 0">
 <table width="100%%"><tr>
-<td><span style="font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.5px">📦 ConfBox</span></td>
+<td><span style="font-size:24px;font-weight:700;color:#ffffff;letter-spacing:-0.5px">ConfBox</span></td>
 <td align="right"><span style="font-size:12px;color:#cffafe">%s</span></td>
 </tr></table>
 <p style="margin:8px 0 0;font-size:14px;color:#e0f7fa">Network Configuration Backup Manager</p>
