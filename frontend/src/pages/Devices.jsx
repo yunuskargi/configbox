@@ -538,9 +538,14 @@ export default function Devices() {
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [vendorFilter, setVendorFilter] = useState('all');
+  const [locationFilter, setLocationFilter] = useState('all');
+  const [locations, setLocations] = useState([]);
 
   const load = () => api.get('/devices').then((r) => setDevices(r.data));
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    api.get('/locations').then((r) => setLocations(r.data)).catch(() => {});
+  }, []);
 
   const showToast = (msg, type = 'success', detail = null) => {
     setToast({ msg, type, detail });
@@ -600,23 +605,49 @@ export default function Devices() {
       </div>
 
       {devices.length > 0 && (
-        <div className="flex items-center gap-2">
-          {[
-            { id: 'all', label: t.dev_filter_all || 'All', color: 'bg-gray-100 text-gray-700 border-gray-300' },
-            { id: 'fortigate', label: 'FortiGate', color: 'bg-orange-50 text-orange-700 border-orange-300' },
-            { id: 'juniper', label: 'Juniper', color: 'bg-teal-50 text-teal-700 border-teal-300' },
-            { id: 'cisco', label: 'Cisco', color: 'bg-indigo-50 text-indigo-700 border-indigo-300' },
-            { id: 'paloalto', label: 'Palo Alto', color: 'bg-red-50 text-red-700 border-red-300' },
-          ].map((v) => {
-            const count = v.id === 'all' ? devices.length : devices.filter((d) => d.vendor === v.id).length;
-            if (v.id !== 'all' && count === 0) return null;
-            return (
-              <button key={v.id} onClick={() => setVendorFilter(v.id)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${vendorFilter === v.id ? v.color : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
-                {v.label} <span className="ml-1 text-xs opacity-70">({count})</span>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {[
+              { id: 'all', label: t.dev_filter_all || 'All', color: 'bg-gray-100 text-gray-700 border-gray-300' },
+              { id: 'fortigate', label: 'FortiGate', color: 'bg-orange-50 text-orange-700 border-orange-300' },
+              { id: 'juniper', label: 'Juniper', color: 'bg-teal-50 text-teal-700 border-teal-300' },
+              { id: 'cisco', label: 'Cisco', color: 'bg-indigo-50 text-indigo-700 border-indigo-300' },
+              { id: 'paloalto', label: 'Palo Alto', color: 'bg-red-50 text-red-700 border-red-300' },
+            ].map((v) => {
+              const count = v.id === 'all' ? devices.length : devices.filter((d) => d.vendor === v.id).length;
+              if (v.id !== 'all' && count === 0) return null;
+              return (
+                <button key={v.id} onClick={() => setVendorFilter(v.id)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${vendorFilter === v.id ? v.color : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
+                  {v.label} <span className="ml-1 text-xs opacity-70">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+          {locations.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <button onClick={() => setLocationFilter('all')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all flex items-center gap-1 ${locationFilter === 'all' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
+                <MapPin size={12} /> {t.dev_filter_all_locations || 'All Locations'} <span className="ml-1 text-xs opacity-70">({devices.length})</span>
               </button>
-            );
-          })}
+              {locations.map((loc) => {
+                const count = devices.filter((d) => d.location_id === loc.id).length;
+                if (count === 0) return null;
+                return (
+                  <button key={loc.id} onClick={() => setLocationFilter(loc.id)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all flex items-center gap-1 ${locationFilter === loc.id ? 'bg-cyan-50 text-cyan-700 border-cyan-300' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
+                    <MapPin size={12} /> {loc.name} <span className="ml-1 text-xs opacity-70">({count})</span>
+                  </button>
+                );
+              })}
+              {devices.some((d) => !d.location_id) && (
+                <button onClick={() => setLocationFilter('none')}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${locationFilter === 'none' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
+                  {t.dev_filter_no_location || 'No Location'} <span className="ml-1 text-xs opacity-70">({devices.filter((d) => !d.location_id).length})</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -663,7 +694,10 @@ export default function Devices() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {devices.filter((d) => vendorFilter === 'all' || d.vendor === vendorFilter).map((d) => (
+            {devices
+              .filter((d) => vendorFilter === 'all' || d.vendor === vendorFilter)
+              .filter((d) => locationFilter === 'all' || (locationFilter === 'none' ? !d.location_id : d.location_id === locationFilter))
+              .map((d) => (
               <tr key={d.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium text-gray-800">{d.name}</td>
                 <td className="px-4 py-3">

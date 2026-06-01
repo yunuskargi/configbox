@@ -126,6 +126,8 @@ export default {
   dev_schedule_day: 'Gün',
   dev_no_devices: 'Henüz cihaz eklenmemiş',
   dev_filter_all: 'Tümü',
+  dev_filter_all_locations: 'Tüm Lokasyonlar',
+  dev_filter_no_location: 'Lokasyonsuz',
   dev_error_title: 'Hata Detayı',
 
   // Bulk Import

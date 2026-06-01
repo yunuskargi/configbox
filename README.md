@@ -1,14 +1,49 @@
-# ConfigBox — Network Configuration Backup Manager
+<div align="center">
 
-Free, open-source network configuration backup tool for FortiGate, Cisco, Juniper, and Palo Alto devices. Automated config backups with a modern web UI, config diff comparison, email notifications, and Docker deployment in minutes.
+# ConfigBox
 
-An alternative to RANCID, Oxidized, and SolarWinds NCM — with a modern dashboard, built-in user management, and zero licensing costs.
+### Modern, open-source network configuration backup manager
 
-![Dashboard](https://img.shields.io/badge/stack-Go%20%2B%20React-blue)
-![License](https://img.shields.io/badge/license-AGPL--3.0-green)
-![Docker](https://img.shields.io/badge/deploy-Docker%20Compose-blue)
+Automated config backups for FortiGate, Cisco, Juniper & Palo Alto — with a clean web UI, diff viewer, scheduling, and Docker deployment in minutes.
 
-![ConfigBox Dashboard](docs/dashboard.png)
+A free alternative to **RANCID**, **Oxidized**, and **SolarWinds NCM**.
+
+[![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)](LICENSE)
+[![Stack](https://img.shields.io/badge/stack-Go%20%2B%20React-00ADD8.svg)](#tech-stack)
+[![Docker](https://img.shields.io/badge/deploy-Docker%20Compose-2496ED.svg)](#quick-start)
+[![GitHub Stars](https://img.shields.io/github/stars/yunuskargi/configbox?style=flat&color=yellow)](https://github.com/yunuskargi/configbox/stargazers)
+[![GitHub Issues](https://img.shields.io/github/issues/yunuskargi/configbox.svg)](https://github.com/yunuskargi/configbox/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/yunuskargi/configbox.svg)](https://github.com/yunuskargi/configbox/commits/main)
+
+[Quick Start](#quick-start) · [Features](#features) · [Supported Devices](#supported-devices) · [Updating](#updating--upgrading)
+
+![ConfigBox Demo](docs/demo.gif)
+
+</div>
+
+## Why ConfigBox?
+
+Tools like **RANCID** and **Oxidized** have been around for years, but they show their age — CLI-only, hard to install, no built-in user management, no notifications. **SolarWinds NCM** solves these but costs thousands per year.
+
+ConfigBox is the modern alternative: a single Docker command to deploy, a clean web UI for everyone on the team, built-in 2FA, email alerts, and S3/Google Drive sync — all free and open-source.
+
+### How does it compare?
+
+| Feature | **ConfigBox** | RANCID | Oxidized | SolarWinds NCM |
+|---|:---:|:---:|:---:|:---:|
+| Modern web UI | ✅ | ❌ | ⚠️ basic | ✅ |
+| Docker single-command install | ✅ | ❌ | ⚠️ | ❌ |
+| Config diff viewer (built-in) | ✅ | via CVS | via Git | ✅ |
+| Scheduled + manual backups | ✅ | ✅ | ✅ | ✅ |
+| Email notifications | ✅ | ⚠️ basic | ⚠️ basic | ✅ |
+| Role-based access control | ✅ | ❌ | ❌ | ✅ |
+| Two-factor authentication | ✅ | ❌ | ❌ | ✅ |
+| Audit log | ✅ | ❌ | ❌ | ✅ |
+| Remote backup (S3 / Google Drive) | ✅ | ❌ | ❌ | ❌ |
+| Multi-language UI | ✅ EN/TR | ❌ | ❌ | ⚠️ |
+| Dark mode | ✅ | ❌ | ❌ | ❌ |
+| **License** | AGPL-3.0 | BSD | Apache-2.0 | Proprietary |
+| **Price** | Free | Free | Free | $$$$ |
 
 ## Supported Devices
 
@@ -21,24 +56,37 @@ An alternative to RANCID, Oxidized, and SolarWinds NCM — with a modern dashboa
 
 ## Features
 
-- Automated scheduled backups (cron-based)
-- One-click manual backup
-- Config diff / comparison
-- CSV bulk device import
-- **Remote backup to S3 / Google Drive** — automatic copy to cloud storage after each backup
-- **Backup archival** — automatic gzip compression of old backups to save disk space
-- Dashboard statistics and trend charts
-- Location-based device management
-- Email notifications (success/failure/change/daily summary) with remote upload status
-- Dark mode / light mode
-- Multi-language support (English & Turkish)
-- Role-based access control (Admin / Backup Admin)
-- Two-factor authentication (TOTP)
-- Comprehensive audit log
-- Encrypted credentials (AES-256-CBC)
-- Rate limiting
-- Single binary (~30MB Docker image)
-- Plain file storage — even if the app crashes, you can access configs directly from the `backups/` directory
+### 🔄 Backup & Storage
+- **Automated scheduled backups** — cron-based, per-device schedules
+- **One-click manual backup** from the dashboard
+- **Built-in config diff** — compare any two backups side-by-side
+- **Remote backup** to S3-compatible storage (AWS, MinIO, R2, B2) or Google Drive
+- **Automatic archival** — gzip compression of old backups to save disk
+- **Plain file storage** — even if the app stops, configs are readable in `backups/`
+- **CSV bulk import** — onboard hundreds of devices in seconds
+
+### 🔐 Security
+- **Two-factor authentication (TOTP)** for all users
+- **AES-256-CBC encrypted credentials** (API tokens, SSH passwords, SMTP)
+- **Role-based access control** (Admin / Backup Admin)
+- **Comprehensive audit log** — every action tracked with user, IP, timestamp
+- **Rate limiting** on auth endpoints and downloads
+- **Single-use download tokens** — backup files cannot be re-fetched with a leaked URL
+- **SSRF / gzip-bomb / path-traversal protection**
+
+### 📊 Monitoring & Notifications
+- **Dashboard** with statistics, trend charts, recent activity
+- **Email notifications** — success / failure / config change / daily summary
+- **Location-based device grouping** with filtering
+- **Vendor + location filters** on the device list
+
+### 🌐 Platform & UX
+- **Multi-vendor support** — FortiGate, Cisco (IOS/NX-OS/ASA), Juniper, Palo Alto
+- **Dark mode** / light mode
+- **Multi-language UI** — English & Turkish
+- **Modern web UI** built with React + Tailwind
+- **Lightweight** — ~30 MB Docker image, single Go binary
+- **Self-hosted** — your configs never leave your infrastructure
 
 ## Quick Start
 

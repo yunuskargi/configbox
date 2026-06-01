@@ -126,6 +126,8 @@ export default {
   dev_schedule_day: 'Day',
   dev_no_devices: 'No devices added yet',
   dev_filter_all: 'All',
+  dev_filter_all_locations: 'All Locations',
+  dev_filter_no_location: 'No Location',
   dev_error_title: 'Error Details',
 
   // Bulk Import
