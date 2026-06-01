@@ -23,27 +23,7 @@ A free alternative to **RANCID**, **Oxidized**, and **SolarWinds NCM**.
 
 ## Why ConfigBox?
 
-Tools like **RANCID** and **Oxidized** have been around for years, but they show their age — CLI-only, hard to install, no built-in user management, no notifications. **SolarWinds NCM** solves these but costs thousands per year.
-
-ConfigBox is the modern alternative: a single Docker command to deploy, a clean web UI for everyone on the team, built-in 2FA, email alerts, and S3/Google Drive sync — all free and open-source.
-
-### How does it compare?
-
-| Feature | **ConfigBox** | RANCID | Oxidized | SolarWinds NCM |
-|---|:---:|:---:|:---:|:---:|
-| Modern web UI | ✅ | ❌ | ⚠️ basic | ✅ |
-| Docker single-command install | ✅ | ❌ | ⚠️ | ❌ |
-| Config diff viewer (built-in) | ✅ | via CVS | via Git | ✅ |
-| Scheduled + manual backups | ✅ | ✅ | ✅ | ✅ |
-| Email notifications | ✅ | ⚠️ basic | ⚠️ basic | ✅ |
-| Role-based access control | ✅ | ❌ | ❌ | ✅ |
-| Two-factor authentication | ✅ | ❌ | ❌ | ✅ |
-| Audit log | ✅ | ❌ | ❌ | ✅ |
-| Remote backup (S3 / Google Drive) | ✅ | ❌ | ❌ | ❌ |
-| Multi-language UI | ✅ EN/TR | ❌ | ❌ | ⚠️ |
-| Dark mode | ✅ | ❌ | ❌ | ❌ |
-| **License** | AGPL-3.0 | BSD | Apache-2.0 | Proprietary |
-| **Price** | Free | Free | Free | $$$$ |
+ConfigBox aims to make network configuration backups straightforward for small to mid-sized teams: a single Docker command to deploy, a clean web UI everyone on the team can use, built-in 2FA, email alerts, and S3/Google Drive sync — all free and open-source. Your configs stay on your infrastructure.
 
 ## Supported Devices
 
