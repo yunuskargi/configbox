@@ -8,11 +8,29 @@ import (
 	"net/smtp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/yunuskargi/configbox/internal/config"
 	"github.com/yunuskargi/configbox/internal/crypto"
 	"github.com/yunuskargi/configbox/internal/database"
+)
+
+// Backup notification batching: when many backups complete near-simultaneously,
+// we group them into a single summary email instead of spamming the inbox.
+type pendingBackup struct {
+	deviceName, vendor, status, errMsg, filePath, location, vdom, triggeredBy string
+	fileSize                                                                  int
+	remote                                                                    RemoteResult
+	at                                                                        time.Time
+}
+
+const backupBatchWindow = 3 * time.Minute
+
+var (
+	backupBatchMu    sync.Mutex
+	backupBatch      []pendingBackup
+	backupBatchTimer *time.Timer
 )
 
 func encodeSubject(s string) string {
@@ -189,7 +207,45 @@ func NotifyBackup(deviceName, vendor, status, errMsg, filePath string, fileSize 
 		return
 	}
 
-	now := time.Now().In(config.AppTimezone).Format("02 Jan 2006, 15:04:05")
+	backupBatchMu.Lock()
+	backupBatch = append(backupBatch, pendingBackup{
+		deviceName: deviceName, vendor: vendor, status: status, errMsg: errMsg,
+		filePath: filePath, fileSize: fileSize, location: location, vdom: vdom,
+		triggeredBy: triggeredBy, remote: remote, at: time.Now(),
+	})
+	if backupBatchTimer == nil {
+		backupBatchTimer = time.AfterFunc(backupBatchWindow, flushBackupBatch)
+	}
+	backupBatchMu.Unlock()
+}
+
+func flushBackupBatch() {
+	backupBatchMu.Lock()
+	items := backupBatch
+	backupBatch = nil
+	backupBatchTimer = nil
+	backupBatchMu.Unlock()
+
+	if len(items) == 0 {
+		return
+	}
+
+	notify := getNotifySettings()
+	recipients := notify["notify_recipients"]
+	if recipients == "" {
+		return
+	}
+
+	if len(items) == 1 {
+		sendSingleBackupEmail(items[0], recipients)
+	} else {
+		sendBatchedBackupEmail(items, recipients)
+	}
+}
+
+func sendSingleBackupEmail(p pendingBackup, recipients string) {
+	now := p.at.In(config.AppTimezone).Format("02 Jan 2006, 15:04:05")
+	deviceName, vendor, status, errMsg, filePath, fileSize, location, vdom, triggeredBy, remote := p.deviceName, p.vendor, p.status, p.errMsg, p.filePath, p.fileSize, p.location, p.vdom, p.triggeredBy, p.remote
 
 	var content strings.Builder
 	content.WriteString(statusBanner(status))
@@ -255,6 +311,108 @@ func NotifyBackup(deviceName, vendor, status, errMsg, filePath string, fileSize 
 
 	if err := sendEmail(recipients, subject, body); err != nil {
 		slog.Error("failed to send backup notification", "error", err)
+	}
+}
+
+func sendBatchedBackupEmail(items []pendingBackup, recipients string) {
+	successCount, failedCount := 0, 0
+	for _, p := range items {
+		if p.status == "success" {
+			successCount++
+		} else {
+			failedCount++
+		}
+	}
+
+	now := time.Now().In(config.AppTimezone).Format("02 Jan 2006, 15:04:05")
+	total := len(items)
+
+	var content strings.Builder
+	// Summary banner
+	bannerColor := "#16a34a"
+	bannerBg := "#dcfce7"
+	if failedCount > 0 {
+		bannerColor = "#dc2626"
+		bannerBg = "#fee2e2"
+	}
+	content.WriteString(fmt.Sprintf(`<div style="background-color:%s;border-left:4px solid %s;border-radius:8px;padding:16px 20px;margin-bottom:20px">
+<p style="margin:0 0 4px;font-size:14px;font-weight:600;color:%s">Backup Summary — %d devices</p>
+<p style="margin:0;font-size:13px;color:#374151">✅ %d success · ❌ %d failed · %s</p>
+</div>`, bannerBg, bannerColor, bannerColor, total, successCount, failedCount, now))
+
+	// Table of results
+	content.WriteString(`<table width="100%" style="border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;margin-bottom:20px;font-size:13px">
+<thead><tr style="background-color:#f1f5f9">
+<th style="padding:10px 12px;text-align:left;color:#475569;font-weight:600;border-bottom:1px solid #e2e8f0">Status</th>
+<th style="padding:10px 12px;text-align:left;color:#475569;font-weight:600;border-bottom:1px solid #e2e8f0">Device</th>
+<th style="padding:10px 12px;text-align:left;color:#475569;font-weight:600;border-bottom:1px solid #e2e8f0">Vendor</th>
+<th style="padding:10px 12px;text-align:left;color:#475569;font-weight:600;border-bottom:1px solid #e2e8f0">Location</th>
+<th style="padding:10px 12px;text-align:left;color:#475569;font-weight:600;border-bottom:1px solid #e2e8f0">Details</th>
+</tr></thead><tbody>`)
+
+	for i, p := range items {
+		rowBg := "#ffffff"
+		if i%2 == 1 {
+			rowBg = "#f8fafc"
+		}
+		statusBadge := `<span style="background-color:#dcfce7;color:#166534;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">✅ OK</span>`
+		details := ""
+		if p.status == "failed" {
+			statusBadge = `<span style="background-color:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">❌ FAIL</span>`
+			details = html.EscapeString(p.errMsg)
+		} else {
+			if size := formatSize(p.fileSize); size != "" {
+				details = size
+			}
+			if p.remote.S3Enabled || p.remote.GDriveEnabled {
+				marks := []string{}
+				if p.remote.S3Enabled {
+					if p.remote.S3OK {
+						marks = append(marks, `<span style="color:#166534">S3 ✓</span>`)
+					} else {
+						marks = append(marks, `<span style="color:#991b1b">S3 ✗</span>`)
+					}
+				}
+				if p.remote.GDriveEnabled {
+					if p.remote.GDriveOK {
+						marks = append(marks, `<span style="color:#166534">GDrive ✓</span>`)
+					} else {
+						marks = append(marks, `<span style="color:#991b1b">GDrive ✗</span>`)
+					}
+				}
+				if details != "" {
+					details += " · "
+				}
+				details += strings.Join(marks, " · ")
+			}
+		}
+		loc := p.location
+		if loc == "" {
+			loc = "—"
+		}
+		if p.vdom != "" {
+			loc += fmt.Sprintf(" <span style='color:#94a3b8;font-size:11px'>(VDOM: %s)</span>", html.EscapeString(p.vdom))
+		}
+		content.WriteString(fmt.Sprintf(`<tr style="background-color:%s">
+<td style="padding:10px 12px;border-bottom:1px solid #e2e8f0">%s</td>
+<td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;font-weight:500;color:#1e293b">%s</td>
+<td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#475569">%s</td>
+<td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#475569">%s</td>
+<td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#475569">%s</td>
+</tr>`, rowBg, statusBadge, html.EscapeString(p.deviceName), strings.ToUpper(html.EscapeString(p.vendor)), loc, details))
+	}
+	content.WriteString(`</tbody></table>`)
+
+	statusSummary := fmt.Sprintf("%d OK", successCount)
+	if failedCount > 0 {
+		statusSummary = fmt.Sprintf("%d OK, %d Failed", successCount, failedCount)
+	}
+	title := fmt.Sprintf("Backup Summary — %d devices", total)
+	subject := fmt.Sprintf("ConfigBox - Backup Summary - %s", statusSummary)
+	body := mailWrapper(title, content.String())
+
+	if err := sendEmail(recipients, subject, body); err != nil {
+		slog.Error("failed to send batched backup notification", "error", err)
 	}
 }
 
