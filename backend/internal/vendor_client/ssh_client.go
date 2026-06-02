@@ -64,6 +64,9 @@ func sshConnect(host string, port int, username, password string, timeout time.D
 			// Legacy
 			"ssh-rsa", "ssh-dss",
 		},
+		// Some network devices (Juniper, older Cisco) reject unknown client versions.
+		// Identify as OpenSSH to maximize compatibility.
+		ClientVersion: "SSH-2.0-OpenSSH_8.9",
 	}
 
 	addr := fmt.Sprintf("%s:%d", host, port)
