@@ -361,30 +361,27 @@ func sendBatchedBackupEmail(items []pendingBackup, recipients string) {
 			statusBadge = `<span style="background-color:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">❌ FAIL</span>`
 			details = html.EscapeString(p.errMsg)
 		} else {
+			parts := []string{}
 			if size := formatSize(p.fileSize); size != "" {
-				details = size
+				parts = append(parts, fmt.Sprintf(`<span style="color:#64748b">%s</span>`, size))
 			}
-			if p.remote.S3Enabled || p.remote.GDriveEnabled {
-				marks := []string{}
-				if p.remote.S3Enabled {
-					if p.remote.S3OK {
-						marks = append(marks, `<span style="color:#166534">S3 ✓</span>`)
-					} else {
-						marks = append(marks, `<span style="color:#991b1b">S3 ✗</span>`)
-					}
+			pillOK := `<span style="display:inline-block;background-color:#dcfce7;color:#166534;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;line-height:1.4">%s&nbsp;✓</span>`
+			pillFail := `<span style="display:inline-block;background-color:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;line-height:1.4">%s&nbsp;✗</span>`
+			if p.remote.S3Enabled {
+				if p.remote.S3OK {
+					parts = append(parts, fmt.Sprintf(pillOK, "S3"))
+				} else {
+					parts = append(parts, fmt.Sprintf(pillFail, "S3"))
 				}
-				if p.remote.GDriveEnabled {
-					if p.remote.GDriveOK {
-						marks = append(marks, `<span style="color:#166534">GDrive ✓</span>`)
-					} else {
-						marks = append(marks, `<span style="color:#991b1b">GDrive ✗</span>`)
-					}
-				}
-				if details != "" {
-					details += " · "
-				}
-				details += strings.Join(marks, " · ")
 			}
+			if p.remote.GDriveEnabled {
+				if p.remote.GDriveOK {
+					parts = append(parts, fmt.Sprintf(pillOK, "Drive"))
+				} else {
+					parts = append(parts, fmt.Sprintf(pillFail, "Drive"))
+				}
+			}
+			details = strings.Join(parts, " ")
 		}
 		loc := p.location
 		if loc == "" {
