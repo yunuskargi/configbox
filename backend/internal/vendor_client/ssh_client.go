@@ -20,6 +20,14 @@ func sshConnect(host string, port int, username, password string, timeout time.D
 		User: username,
 		Auth: []ssh.AuthMethod{
 			ssh.Password(password),
+			// Some Juniper devices (QFX, EX series) only accept keyboard-interactive auth, not plain password.
+			ssh.KeyboardInteractive(func(name, instruction string, questions []string, echos []bool) ([]string, error) {
+				answers := make([]string, len(questions))
+				for i := range questions {
+					answers[i] = password
+				}
+				return answers, nil
+			}),
 		},
 		// Network devices (routers, firewalls) use self-signed SSH keys with no PKI; host key verification is not feasible.
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
