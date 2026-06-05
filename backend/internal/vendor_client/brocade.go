@@ -12,14 +12,15 @@ func FetchBrocadeConfig(ip string, port int, username, password, enablePassword 
 	}
 	defer client.Close()
 
-	// Brocade NOS/FastIron/NetIron all accept "terminal length 0" to disable paging.
-	commands := []string{"terminal length 0"}
+	// Brocade NOS/FastIron/NetIron: use both "terminal length 0" AND the "| no-more" pipe
+	// to disable pagination — some NOS versions need the pipe form.
+	commands := []string{"terminal length 0", "skip-page-display"}
 	if enablePassword != "" {
 		commands = append(commands, "enable", enablePassword)
 	}
-	commands = append(commands, "show running-config")
+	commands = append(commands, "show running-config | nomore")
 
-	output, err := sshRunInteractive(client, commands, 60*time.Second)
+	output, err := sshRunInteractive(client, commands, 120*time.Second)
 	if err != nil {
 		return "", fmt.Errorf("command execution failed: %v", err)
 	}
