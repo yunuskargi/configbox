@@ -133,6 +133,8 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 		configContent, fetchErr = vc.FetchJuniperConfig(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword)
 	case "cisco":
 		configContent, fetchErr = vc.FetchCiscoConfig(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword, device.EnablePassword, device.Platform)
+	case "brocade":
+		configContent, fetchErr = vc.FetchBrocadeConfig(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword, device.EnablePassword)
 	case "paloalto":
 		configContent, fetchErr = vc.FetchPaloAltoConfig(device.IPAddress, device.Port, device.AuthToken)
 	default:
@@ -196,6 +198,8 @@ func TestDeviceConnection(deviceID int) map[string]any {
 		err = vc.TestJuniper(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword)
 	case "cisco":
 		err = vc.TestCisco(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword, device.EnablePassword, device.Platform)
+	case "brocade":
+		err = vc.TestBrocade(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword, device.EnablePassword)
 	case "paloalto":
 		err = vc.TestPaloAlto(device.IPAddress, device.Port, device.AuthToken)
 	default:

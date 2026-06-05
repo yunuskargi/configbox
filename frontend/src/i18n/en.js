@@ -125,6 +125,9 @@ export default {
   dev_schedule_time: 'Time',
   dev_schedule_day: 'Day',
   dev_no_devices: 'No devices added yet',
+  dev_added: 'Device added',
+  dev_updated: 'Device updated',
+  dev_deleted: 'Device deleted',
   dev_filter_all: 'All',
   dev_filter_all_locations: 'All Locations',
   dev_filter_no_location: 'No Location',
@@ -412,6 +415,23 @@ export default {
       ],
       commands: '# === IOS / IOS-XE ===\nusername configbox privilege 15 secret YourPassword\ncrypto key generate rsa modulus 2048\nip ssh version 2\nline vty 0 4\n transport input ssh\n login local\n\n# === NX-OS (Nexus / MDS SAN Switch) ===\nrole name configbox-role\n  rule 1 permit show\n  rule 2 permit exec\nusername configbox role configbox-role password YourPassword',
       note: 'IOS/IOS-XE: Enable password is required if the user does not have privilege 15. NX-OS: The default network-operator role may not be sufficient on MDS switches — use a custom role with show + exec permissions.',
+    },
+    brocade: {
+      protocol: 'SSH',
+      port: '22',
+      requirements: [
+        'Brocade switch (VDX NOS, ICX FastIron, MLX NetIron)',
+        'SSH service enabled',
+        'User account with read access to running-config',
+      ],
+      steps: [
+        'Enable SSH on the switch if not already enabled',
+        'Create a user with the built-in "user" role (read-only)',
+        'Verify SSH connectivity from the ConfigBox server',
+        'In ConfigBox, add the device with IP, port 22, SSH username and password',
+      ],
+      commands: '# === Brocade VDX (NOS) ===\nconfigure terminal\nusername configbox role user password YourPassword\nexit\ncopy running-config startup-config\n\n# === Brocade ICX (FastIron) ===\nusername configbox password YourPassword\nip ssh server\n\n# === Brocade MLX (NetIron) ===\nusername configbox password YourPassword\nip ssh',
+      note: 'ConfigBox runs "terminal length 0" followed by "show running-config" to fetch the config. The built-in "user" role is sufficient on VDX NOS. Older NOS versions do not support custom command-level RBAC — use "user" or "admin".',
     },
     paloalto: {
       protocol: 'PAN-OS XML API (HTTPS)',

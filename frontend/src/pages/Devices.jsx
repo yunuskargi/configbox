@@ -3,7 +3,7 @@ import api from '../api/client';
 import { useLang } from '../context/LangContext';
 import { Plus, Play, Pencil, Trash2, Wifi, Clock, X, MapPin, Upload, Download, FileSpreadsheet, CheckCircle, XCircle, Loader2, BookOpen } from 'lucide-react';
 
-const vendorDefaults = { fortigate: { port: 443 }, juniper: { port: 22 }, cisco: { port: 22 }, paloalto: { port: 443 } };
+const vendorDefaults = { fortigate: { port: 443 }, juniper: { port: 22 }, cisco: { port: 22 }, brocade: { port: 22 }, paloalto: { port: 443 } };
 const ciscoPlatforms = { ios: 'IOS / IOS-XE', nxos: 'NX-OS (Nexus)', asa: 'ASA (Firewall)' };
 
 function formatCron(cron, t) {
@@ -88,10 +88,11 @@ function DeviceModal({ device, onClose, onSaved, t }) {
         if (!sshPassTouched) delete payload.ssh_password;
         if (!enablePassTouched) delete payload.enable_password;
         await api.put(`/devices/${device.id}`, payload);
+        onSaved(t.dev_updated || 'Device updated');
       } else {
         await api.post('/devices', payload);
+        onSaved(t.dev_added || 'Device added');
       }
-      onSaved();
     } catch (err) {
       setError(err.response?.data?.detail || t.error_occurred);
     } finally {
@@ -121,6 +122,7 @@ function DeviceModal({ device, onClose, onSaved, t }) {
                 <option value="fortigate">FortiGate</option>
                 <option value="juniper">Juniper</option>
                 <option value="cisco">Cisco</option>
+                <option value="brocade">Brocade</option>
                 <option value="paloalto">Palo Alto</option>
               </select>
             </div>
@@ -160,7 +162,7 @@ function DeviceModal({ device, onClose, onSaved, t }) {
             </>
           )}
 
-          {(form.vendor === 'juniper' || form.vendor === 'cisco') && (
+          {(form.vendor === 'juniper' || form.vendor === 'cisco' || form.vendor === 'brocade') && (
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -245,8 +247,12 @@ function DeleteModal({ device, onClose, onDeleted, t }) {
 
   const handleDelete = async () => {
     setDeleting(true);
-    await api.delete(`/devices/${device.id}?keep_backups=${keepBackups}`);
-    onDeleted();
+    try {
+      await api.delete(`/devices/${device.id}?keep_backups=${keepBackups}`);
+      onDeleted(t.dev_deleted || 'Device deleted', 'success');
+    } catch (err) {
+      onDeleted(err.response?.data?.detail || t.error_occurred, 'error');
+    }
   };
 
   return (
@@ -391,8 +397,8 @@ function BulkImportModal({ onClose, onImported, t }) {
                       <td className="px-3 py-2 text-gray-400">{r.row}</td>
                       <td className="px-3 py-2 font-medium text-gray-800">{r.name}</td>
                       <td className="px-3 py-2">
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${r.vendor === 'fortigate' ? 'bg-orange-100 text-orange-700' : r.vendor === 'cisco' ? 'bg-indigo-100 text-indigo-700' : r.vendor === 'paloalto' ? 'bg-red-100 text-red-700' : 'bg-teal-100 text-teal-700'}`}>
-                          {r.vendor === 'fortigate' ? 'FortiGate' : r.vendor === 'cisco' ? 'Cisco' : r.vendor === 'paloalto' ? 'Palo Alto' : 'Juniper'}
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${r.vendor === 'fortigate' ? 'bg-orange-100 text-orange-700' : r.vendor === 'cisco' ? 'bg-indigo-100 text-indigo-700' : r.vendor === 'paloalto' ? 'bg-red-100 text-red-700' : r.vendor === 'brocade' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700'}`}>
+                          {r.vendor === 'fortigate' ? 'FortiGate' : r.vendor === 'cisco' ? 'Cisco' : r.vendor === 'paloalto' ? 'Palo Alto' : r.vendor === 'brocade' ? 'Brocade' : 'Juniper'}
                         </span>
                       </td>
                       <td className="px-3 py-2 text-gray-600">{r.ip_address}</td>
@@ -446,6 +452,7 @@ function VendorGuide({ onClose, t }) {
     { id: 'fortigate', name: 'FortiGate', color: 'text-red-600 bg-red-50 border-red-200' },
     { id: 'juniper', name: 'Juniper', color: 'text-green-600 bg-green-50 border-green-200' },
     { id: 'cisco', name: 'Cisco', color: 'text-blue-600 bg-blue-50 border-blue-200' },
+    { id: 'brocade', name: 'Brocade', color: 'text-purple-600 bg-purple-50 border-purple-200' },
     { id: 'paloalto', name: 'Palo Alto', color: 'text-orange-600 bg-orange-50 border-orange-200' },
   ];
   const guides = t.guide_vendors;
@@ -612,6 +619,7 @@ export default function Devices() {
               { id: 'fortigate', label: 'FortiGate', color: 'bg-orange-50 text-orange-700 border-orange-300' },
               { id: 'juniper', label: 'Juniper', color: 'bg-teal-50 text-teal-700 border-teal-300' },
               { id: 'cisco', label: 'Cisco', color: 'bg-indigo-50 text-indigo-700 border-indigo-300' },
+              { id: 'brocade', label: 'Brocade', color: 'bg-purple-50 text-purple-700 border-purple-300' },
               { id: 'paloalto', label: 'Palo Alto', color: 'bg-red-50 text-red-700 border-red-300' },
             ].map((v) => {
               const count = v.id === 'all' ? devices.length : devices.filter((d) => d.vendor === v.id).length;
@@ -701,8 +709,8 @@ export default function Devices() {
               <tr key={d.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium text-gray-800">{d.name}</td>
                 <td className="px-4 py-3">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${d.vendor === 'fortigate' ? 'bg-orange-100 text-orange-700' : d.vendor === 'cisco' ? 'bg-indigo-100 text-indigo-700' : d.vendor === 'paloalto' ? 'bg-red-100 text-red-700' : 'bg-teal-100 text-teal-700'}`}>
-                    {d.vendor === 'fortigate' ? 'FortiGate' : d.vendor === 'cisco' ? (ciscoPlatforms[d.platform] || 'Cisco') : d.vendor === 'paloalto' ? 'Palo Alto' : 'Juniper'}
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${d.vendor === 'fortigate' ? 'bg-orange-100 text-orange-700' : d.vendor === 'cisco' ? 'bg-indigo-100 text-indigo-700' : d.vendor === 'paloalto' ? 'bg-red-100 text-red-700' : d.vendor === 'brocade' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700'}`}>
+                    {d.vendor === 'fortigate' ? 'FortiGate' : d.vendor === 'cisco' ? (ciscoPlatforms[d.platform] || 'Cisco') : d.vendor === 'paloalto' ? 'Palo Alto' : d.vendor === 'brocade' ? 'Brocade' : 'Juniper'}
                   </span>
                   {d.vdom && <div className="text-xs text-gray-400 mt-0.5">VDOM: {d.vdom}</div>}
                 </td>
@@ -741,8 +749,8 @@ export default function Devices() {
         </table>
       </div>
 
-      {showModal && <DeviceModal device={showModal.id ? showModal : null} onClose={() => setShowModal(null)} onSaved={() => { setShowModal(null); load(); }} t={t} />}
-      {deleteTarget && <DeleteModal device={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={() => { setDeleteTarget(null); load(); }} t={t} />}
+      {showModal && <DeviceModal device={showModal.id ? showModal : null} onClose={() => setShowModal(null)} onSaved={(msg) => { setShowModal(null); load(); if (msg) showToast(msg, 'success'); }} t={t} />}
+      {deleteTarget && <DeleteModal device={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={(msg, type) => { setDeleteTarget(null); load(); if (msg) showToast(msg, type || 'success'); }} t={t} />}
       {showBulkImport && <BulkImportModal onClose={() => setShowBulkImport(false)} onImported={load} t={t} />}
       {showGuide && <VendorGuide onClose={() => setShowGuide(false)} t={t} />}
     </div>

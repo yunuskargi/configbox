@@ -125,6 +125,9 @@ export default {
   dev_schedule_time: 'Saat',
   dev_schedule_day: 'Gün',
   dev_no_devices: 'Henüz cihaz eklenmemiş',
+  dev_added: 'Cihaz eklendi',
+  dev_updated: 'Cihaz güncellendi',
+  dev_deleted: 'Cihaz silindi',
   dev_filter_all: 'Tümü',
   dev_filter_all_locations: 'Tüm Lokasyonlar',
   dev_filter_no_location: 'Lokasyonsuz',
@@ -412,6 +415,23 @@ export default {
       ],
       commands: '# === IOS / IOS-XE ===\nusername configbox privilege 15 secret YourPassword\ncrypto key generate rsa modulus 2048\nip ssh version 2\nline vty 0 4\n transport input ssh\n login local\n\n# === NX-OS (Nexus / MDS SAN Switch) ===\nrole name configbox-role\n  rule 1 permit show\n  rule 2 permit exec\nusername configbox role configbox-role password YourPassword',
       note: 'IOS/IOS-XE: Kullanıcı privilege 15 değilse enable şifresi gereklidir. NX-OS: MDS switch\'lerde varsayılan network-operator rolü yeterli olmayabilir — show + exec yetkili özel rol kullanın.',
+    },
+    brocade: {
+      protocol: 'SSH',
+      port: '22',
+      requirements: [
+        'Brocade switch (VDX NOS, ICX FastIron, MLX NetIron)',
+        'SSH servisi aktif',
+        'running-config okuma yetkisine sahip kullanıcı',
+      ],
+      steps: [
+        'Switch üzerinde SSH aktif değilse aktif edin',
+        'Built-in "user" rolü (read-only) ile bir kullanıcı oluşturun',
+        'ConfigBox sunucusundan SSH bağlantısını doğrulayın',
+        'ConfigBox\'ta cihazı IP, port 22, SSH kullanıcı adı ve şifresi ile ekleyin',
+      ],
+      commands: '# === Brocade VDX (NOS) ===\nconfigure terminal\nusername configbox role user password YourPassword\nexit\ncopy running-config startup-config\n\n# === Brocade ICX (FastIron) ===\nusername configbox password YourPassword\nip ssh server\n\n# === Brocade MLX (NetIron) ===\nusername configbox password YourPassword\nip ssh',
+      note: 'ConfigBox konfigürasyonu çekmek için "terminal length 0" ardından "show running-config" çalıştırır. VDX NOS\'ta built-in "user" rolü yeterlidir. Eski NOS sürümleri custom komut bazlı RBAC desteklemez — "user" veya "admin" kullanın.',
     },
     paloalto: {
       protocol: 'PAN-OS XML API (HTTPS)',
