@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -224,7 +225,9 @@ func sshFallbackInteractive(host string, port int, username, password string, co
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "sshpass", args...)
-	cmd.Env = append(cmd.Env, "SSHPASS="+password)
+	// Inherit parent environment so PATH/HOME/etc. are available to sshpass and ssh.
+	// SSHPASS is appended (not the only var) and read by sshpass with -e flag.
+	cmd.Env = append(os.Environ(), "SSHPASS="+password)
 
 	var stdin bytes.Buffer
 	for _, c := range commands {
