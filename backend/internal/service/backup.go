@@ -152,6 +152,10 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 		return map[string]any{"status": "failed", "error": "Backup failed. Check backup history for details."}
 	}
 
+	// Read previous config BEFORE writing the new file — otherwise getPreviousConfig
+	// returns the file we're about to write and change detection always reports "no change".
+	previousConfig := getPreviousConfig(deviceDir)
+
 	if err := os.WriteFile(filePath, []byte(configContent), 0600); err != nil {
 		slog.Error("failed to write backup file", "path", filePath, "error", err)
 		database.DB.Exec(`INSERT INTO backups (device_id, file_path, file_size, status, error_message, triggered_by, created_at)
@@ -162,7 +166,6 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 	fileSize := int(fi.Size())
 
 	configChanged := false
-	previousConfig := getPreviousConfig(deviceDir)
 	if previousConfig != "" {
 		configChanged = normalizeConfig(previousConfig, device.Vendor) != normalizeConfig(configContent, device.Vendor)
 	}
