@@ -7,10 +7,11 @@ import (
 
 func FetchDellConfig(ip string, port int, username, password, enablePassword string) (string, error) {
 	// Dell PowerConnect requires priv 15 for show running-config.
-	// Send enable always — if no enable password is set on device, elevation is immediate.
+	// Mirror exactly what works manually: enable [+ password if set], terminal length 0, show running-config.
 	commands := []string{"enable"}
-	// Send the enable password (or an empty line if none) so any "Password:" prompt is consumed safely.
-	commands = append(commands, enablePassword)
+	if enablePassword != "" {
+		commands = append(commands, enablePassword)
+	}
 	commands = append(commands, "terminal length 0", "show running-config")
 
 	output, err := runSSHCommands(ip, port, username, password, commands, 30*time.Second, 150*time.Second)
