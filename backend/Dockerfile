@@ -10,7 +10,7 @@ COPY . .
 RUN CGO_ENABLED=1 go build -ldflags="-s -w" -o /configbox ./cmd/configbox
 
 FROM alpine:3.20
-RUN apk add --no-cache ca-certificates tzdata su-exec
+RUN apk add --no-cache ca-certificates tzdata su-exec openssh-client sshpass
 RUN addgroup -g 1000 configbox && adduser -D -u 1000 -G configbox configbox
 COPY --from=builder /configbox /configbox
 COPY entrypoint.sh /entrypoint.sh

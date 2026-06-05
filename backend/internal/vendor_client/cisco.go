@@ -22,12 +22,6 @@ func FetchCiscoConfig(ip string, port int, username, password, enablePassword, p
 		platform = "ios"
 	}
 
-	client, err := sshConnect(ip, port, username, password, 30*time.Second)
-	if err != nil {
-		return "", fmt.Errorf("SSH connection failed: %v", err)
-	}
-	defer client.Close()
-
 	commands := []string{"terminal length 0"}
 	if enablePassword != "" {
 		commands = append(commands, "enable", enablePassword)
@@ -39,9 +33,9 @@ func FetchCiscoConfig(ip string, port int, username, password, enablePassword, p
 	}
 	commands = append(commands, cmd)
 
-	output, err := sshRunInteractive(client, commands, 60*time.Second)
+	output, err := runSSHCommands(ip, port, username, password, commands, 30*time.Second, 60*time.Second)
 	if err != nil {
-		return "", fmt.Errorf("command execution failed: %v", err)
+		return "", fmt.Errorf("SSH connection failed: %v", err)
 	}
 
 	cleaned := cleanSSHOutput(output, cmd)
@@ -52,12 +46,6 @@ func TestCisco(ip string, port int, username, password, enablePassword, platform
 	if platform == "" {
 		platform = "ios"
 	}
-
-	client, err := sshConnect(ip, port, username, password, 10*time.Second)
-	if err != nil {
-		return fmt.Errorf("SSH connection failed: %v", err)
-	}
-	defer client.Close()
 
 	commands := []string{"terminal length 0"}
 	if enablePassword != "" {
@@ -70,9 +58,9 @@ func TestCisco(ip string, port int, username, password, enablePassword, platform
 	}
 	commands = append(commands, cmd)
 
-	_, err = sshRunInteractive(client, commands, 15*time.Second)
+	_, err := runSSHCommands(ip, port, username, password, commands, 10*time.Second, 15*time.Second)
 	if err != nil {
-		return fmt.Errorf("command execution failed: %v", err)
+		return fmt.Errorf("SSH connection failed: %v", err)
 	}
 	return nil
 }

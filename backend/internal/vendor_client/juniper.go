@@ -6,31 +6,20 @@ import (
 )
 
 func FetchJuniperConfig(ip string, port int, username, password string) (string, error) {
-	client, err := sshConnect(ip, port, username, password, 30*time.Second)
+	commands := []string{"show configuration | display set | no-more"}
+	output, err := runSSHCommands(ip, port, username, password, commands, 30*time.Second, 60*time.Second)
 	if err != nil {
 		return "", fmt.Errorf("SSH connection failed: %v", err)
 	}
-	defer client.Close()
-
-	output, err := sshRunCommand(client, "show configuration | display set | no-more", 60*time.Second)
-	if err != nil {
-		return "", fmt.Errorf("command execution failed: %v", err)
-	}
-
 	cleaned := cleanSSHOutput(output, "show configuration")
 	return cleaned, nil
 }
 
 func TestJuniper(ip string, port int, username, password string) error {
-	client, err := sshConnect(ip, port, username, password, 10*time.Second)
+	commands := []string{"show version"}
+	_, err := runSSHCommands(ip, port, username, password, commands, 10*time.Second, 15*time.Second)
 	if err != nil {
 		return fmt.Errorf("SSH connection failed: %v", err)
-	}
-	defer client.Close()
-
-	_, err = sshRunCommand(client, "show version", 15*time.Second)
-	if err != nil {
-		return fmt.Errorf("command execution failed: %v", err)
 	}
 	return nil
 }

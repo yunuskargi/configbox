@@ -2,8 +2,12 @@ package vendor_client
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
+	"log/slog"
+	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -177,4 +181,68 @@ func cleanSSHOutput(output, command string) string {
 		return output
 	}
 	return strings.Join(result, "\n")
+}
+
+// runSSHCommands runs interactive SSH commands and returns combined output.
+// Tries Go's crypto/ssh first; if that fails (typically due to legacy SSH
+// server bugs like the OpenSSH 6.x preauth crash), falls back to the system
+// openssh client invoked via sshpass.
+func runSSHCommands(host string, port int, username, password string, commands []string, connectTimeout, readTimeout time.Duration) (string, error) {
+	client, err := sshConnect(host, port, username, password, connectTimeout)
+	if err == nil {
+		defer client.Close()
+		return sshRunInteractive(client, commands, readTimeout)
+	}
+
+	slog.Info("ssh: Go client failed, attempting system openssh fallback", "host", host, "error", err.Error())
+	output, fbErr := sshFallbackInteractive(host, port, username, password, commands, connectTimeout+readTimeout)
+	if fbErr != nil {
+		// Return the original Go SSH error since fallback also failed.
+		return "", fmt.Errorf("%v (fallback also failed: %v)", err, fbErr)
+	}
+	return output, nil
+}
+
+// sshFallbackInteractive shells out to system openssh via sshpass for legacy
+// devices that Go's crypto/ssh cannot interoperate with (e.g. OpenSSH 6.x
+// servers that crash on modern KEXINIT extensions).
+func sshFallbackInteractive(host string, port int, username, password string, commands []string, timeout time.Duration) (string, error) {
+	args := []string{
+		"-e", "ssh",
+		"-o", "StrictHostKeyChecking=no",
+		"-o", "UserKnownHostsFile=/dev/null",
+		"-o", "ConnectTimeout=30",
+		"-o", "KexAlgorithms=+diffie-hellman-group1-sha1,diffie-hellman-group14-sha1,diffie-hellman-group-exchange-sha1",
+		"-o", "HostKeyAlgorithms=+ssh-rsa,ssh-dss",
+		"-o", "PubkeyAuthentication=no",
+		"-o", "PreferredAuthentications=password,keyboard-interactive",
+		"-p", strconv.Itoa(port),
+		fmt.Sprintf("%s@%s", username, host),
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "sshpass", args...)
+	cmd.Env = append(cmd.Env, "SSHPASS="+password)
+
+	var stdin bytes.Buffer
+	for _, c := range commands {
+		stdin.WriteString(c + "\n")
+	}
+	stdin.WriteString("exit\n")
+	cmd.Stdin = &stdin
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	out := stdout.String()
+	// Some network devices return a non-zero exit code even on success — accept
+	// the output if we got something substantial.
+	if err != nil && len(out) < 50 {
+		return "", fmt.Errorf("system ssh failed: %v: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return out, nil
 }
