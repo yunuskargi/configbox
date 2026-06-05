@@ -87,6 +87,18 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Trim whitespace from credentials to prevent silent auth failures (common copy-paste mistake)
+	body.Name = strings.TrimSpace(body.Name)
+	body.IPAddress = strings.TrimSpace(body.IPAddress)
+	if body.SSHUsername != nil {
+		trimmed := strings.TrimSpace(*body.SSHUsername)
+		body.SSHUsername = &trimmed
+	}
+	if body.AuthToken != nil {
+		trimmed := strings.TrimSpace(*body.AuthToken)
+		body.AuthToken = &trimmed
+	}
+
 	validName := regexp.MustCompile(`^[a-zA-Z0-9._\-\s]{1,64}$`)
 	if !validName.MatchString(body.Name) {
 		writeError(w, 400, "Invalid device name. Use letters, numbers, dots, hyphens, underscores (max 64 chars)")
@@ -178,9 +190,14 @@ func UpdateDevice(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		switch key {
+		case "name", "ip_address", "ssh_username", "vdom":
+			// Trim whitespace to prevent silent auth failures from copy-paste
+			if s, ok := val.(string); ok {
+				val = strings.TrimSpace(s)
+			}
 		case "auth_token", "ssh_password", "enable_password":
 			if s, ok := val.(string); ok && s != "" {
-				val = crypto.Encrypt(s)
+				val = crypto.Encrypt(strings.TrimSpace(s))
 			}
 		case "port":
 			if f, ok := val.(float64); ok {
