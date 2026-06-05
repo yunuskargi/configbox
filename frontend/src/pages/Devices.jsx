@@ -177,17 +177,17 @@ function DeviceModal({ device, onClose, onSaved, t }) {
                 </div>
               </div>
               {form.vendor === 'cisco' && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_platform}</label>
-                    <select value={form.platform || 'ios'} onChange={(e) => set('platform', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                      {Object.entries(ciscoPlatforms).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_enable_password}</label>
-                    <input type="password" value={form.enable_password || ''} onChange={(e) => { set('enable_password', e.target.value); setEnablePassTouched(true); }} onFocus={() => { if (!enablePassTouched && form.enable_password === '********') { set('enable_password', ''); setEnablePassTouched(true); } }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder={t.optional} />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_platform}</label>
+                  <select value={form.platform || 'ios'} onChange={(e) => set('platform', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    {Object.entries(ciscoPlatforms).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                </div>
+              )}
+              {(form.vendor === 'cisco' || form.vendor === 'dell') && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_enable_password}</label>
+                  <input type="password" value={form.enable_password || ''} onChange={(e) => { set('enable_password', e.target.value); setEnablePassTouched(true); }} onFocus={() => { if (!enablePassTouched && form.enable_password === '********') { set('enable_password', ''); setEnablePassTouched(true); } }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder={t.optional} />
                 </div>
               )}
             </>

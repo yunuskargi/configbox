@@ -6,9 +6,11 @@ import (
 )
 
 func FetchDellConfig(ip string, port int, username, password, enablePassword string) (string, error) {
-	commands := []string{}
+	// Always send enable — Dell PowerConnect requires priv 15 for show running-config.
+	// If no enable password is set on the device, enable elevates immediately without prompting.
+	commands := []string{"enable"}
 	if enablePassword != "" {
-		commands = append(commands, "enable", enablePassword)
+		commands = append(commands, enablePassword)
 	}
 	commands = append(commands, "terminal length 0", "show running-config")
 
@@ -22,9 +24,9 @@ func FetchDellConfig(ip string, port int, username, password, enablePassword str
 }
 
 func TestDell(ip string, port int, username, password, enablePassword string) error {
-	commands := []string{}
+	commands := []string{"enable"}
 	if enablePassword != "" {
-		commands = append(commands, "enable", enablePassword)
+		commands = append(commands, enablePassword)
 	}
 	commands = append(commands, "show version")
 
