@@ -3,7 +3,7 @@ import api from '../api/client';
 import { useLang } from '../context/LangContext';
 import { Plus, Play, Pencil, Trash2, Wifi, Clock, X, MapPin, Upload, Download, FileSpreadsheet, CheckCircle, XCircle, Loader2, BookOpen } from 'lucide-react';
 
-const vendorDefaults = { fortigate: { port: 443 }, juniper: { port: 22 }, cisco: { port: 22 }, brocade: { port: 22 }, paloalto: { port: 443 } };
+const vendorDefaults = { fortigate: { port: 443 }, juniper: { port: 22 }, cisco: { port: 22 }, brocade: { port: 22 }, dell: { port: 22 }, extreme: { port: 22 }, paloalto: { port: 443 } };
 const ciscoPlatforms = { ios: 'IOS / IOS-XE', nxos: 'NX-OS (Nexus)', asa: 'ASA (Firewall)' };
 
 function formatCron(cron, t) {
@@ -123,6 +123,8 @@ function DeviceModal({ device, onClose, onSaved, t }) {
                 <option value="juniper">Juniper</option>
                 <option value="cisco">Cisco</option>
                 <option value="brocade">Brocade</option>
+                <option value="dell">Dell PowerConnect</option>
+                <option value="extreme">Extreme SLX</option>
                 <option value="paloalto">Palo Alto</option>
               </select>
             </div>
@@ -162,7 +164,7 @@ function DeviceModal({ device, onClose, onSaved, t }) {
             </>
           )}
 
-          {(form.vendor === 'juniper' || form.vendor === 'cisco' || form.vendor === 'brocade') && (
+          {(form.vendor === 'juniper' || form.vendor === 'cisco' || form.vendor === 'brocade' || form.vendor === 'dell' || form.vendor === 'extreme') && (
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -397,8 +399,8 @@ function BulkImportModal({ onClose, onImported, t }) {
                       <td className="px-3 py-2 text-gray-400">{r.row}</td>
                       <td className="px-3 py-2 font-medium text-gray-800">{r.name}</td>
                       <td className="px-3 py-2">
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${r.vendor === 'fortigate' ? 'bg-orange-100 text-orange-700' : r.vendor === 'cisco' ? 'bg-indigo-100 text-indigo-700' : r.vendor === 'paloalto' ? 'bg-red-100 text-red-700' : r.vendor === 'brocade' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700'}`}>
-                          {r.vendor === 'fortigate' ? 'FortiGate' : r.vendor === 'cisco' ? 'Cisco' : r.vendor === 'paloalto' ? 'Palo Alto' : r.vendor === 'brocade' ? 'Brocade' : 'Juniper'}
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${r.vendor === 'fortigate' ? 'bg-orange-100 text-orange-700' : r.vendor === 'cisco' ? 'bg-indigo-100 text-indigo-700' : r.vendor === 'paloalto' ? 'bg-red-100 text-red-700' : r.vendor === 'brocade' ? 'bg-purple-100 text-purple-700' : r.vendor === 'dell' ? 'bg-amber-100 text-amber-700' : r.vendor === 'extreme' ? 'bg-emerald-100 text-emerald-700' : 'bg-teal-100 text-teal-700'}`}>
+                          {r.vendor === 'fortigate' ? 'FortiGate' : r.vendor === 'cisco' ? 'Cisco' : r.vendor === 'paloalto' ? 'Palo Alto' : r.vendor === 'brocade' ? 'Brocade' : r.vendor === 'dell' ? 'Dell' : r.vendor === 'extreme' ? 'Extreme' : 'Juniper'}
                         </span>
                       </td>
                       <td className="px-3 py-2 text-gray-600">{r.ip_address}</td>
@@ -453,6 +455,8 @@ function VendorGuide({ onClose, t }) {
     { id: 'juniper', name: 'Juniper', color: 'text-green-600 bg-green-50 border-green-200' },
     { id: 'cisco', name: 'Cisco', color: 'text-blue-600 bg-blue-50 border-blue-200' },
     { id: 'brocade', name: 'Brocade', color: 'text-purple-600 bg-purple-50 border-purple-200' },
+    { id: 'dell', name: 'Dell', color: 'text-amber-600 bg-amber-50 border-amber-200' },
+    { id: 'extreme', name: 'Extreme', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
     { id: 'paloalto', name: 'Palo Alto', color: 'text-orange-600 bg-orange-50 border-orange-200' },
   ];
   const guides = t.guide_vendors;
@@ -620,6 +624,8 @@ export default function Devices() {
               { id: 'juniper', label: 'Juniper', color: 'bg-teal-50 text-teal-700 border-teal-300' },
               { id: 'cisco', label: 'Cisco', color: 'bg-indigo-50 text-indigo-700 border-indigo-300' },
               { id: 'brocade', label: 'Brocade', color: 'bg-purple-50 text-purple-700 border-purple-300' },
+              { id: 'dell', label: 'Dell', color: 'bg-amber-50 text-amber-700 border-amber-300' },
+              { id: 'extreme', label: 'Extreme', color: 'bg-emerald-50 text-emerald-700 border-emerald-300' },
               { id: 'paloalto', label: 'Palo Alto', color: 'bg-red-50 text-red-700 border-red-300' },
             ].map((v) => {
               const count = v.id === 'all' ? devices.length : devices.filter((d) => d.vendor === v.id).length;
@@ -709,8 +715,8 @@ export default function Devices() {
               <tr key={d.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium text-gray-800">{d.name}</td>
                 <td className="px-4 py-3">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${d.vendor === 'fortigate' ? 'bg-orange-100 text-orange-700' : d.vendor === 'cisco' ? 'bg-indigo-100 text-indigo-700' : d.vendor === 'paloalto' ? 'bg-red-100 text-red-700' : d.vendor === 'brocade' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700'}`}>
-                    {d.vendor === 'fortigate' ? 'FortiGate' : d.vendor === 'cisco' ? (ciscoPlatforms[d.platform] || 'Cisco') : d.vendor === 'paloalto' ? 'Palo Alto' : d.vendor === 'brocade' ? 'Brocade' : 'Juniper'}
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${d.vendor === 'fortigate' ? 'bg-orange-100 text-orange-700' : d.vendor === 'cisco' ? 'bg-indigo-100 text-indigo-700' : d.vendor === 'paloalto' ? 'bg-red-100 text-red-700' : d.vendor === 'brocade' ? 'bg-purple-100 text-purple-700' : d.vendor === 'dell' ? 'bg-amber-100 text-amber-700' : d.vendor === 'extreme' ? 'bg-emerald-100 text-emerald-700' : 'bg-teal-100 text-teal-700'}`}>
+                    {d.vendor === 'fortigate' ? 'FortiGate' : d.vendor === 'cisco' ? (ciscoPlatforms[d.platform] || 'Cisco') : d.vendor === 'paloalto' ? 'Palo Alto' : d.vendor === 'brocade' ? 'Brocade' : d.vendor === 'dell' ? 'Dell' : d.vendor === 'extreme' ? 'Extreme' : 'Juniper'}
                   </span>
                   {d.vdom && <div className="text-xs text-gray-400 mt-0.5">VDOM: {d.vdom}</div>}
                 </td>

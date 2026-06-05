@@ -416,6 +416,40 @@ export default {
       commands: '# === IOS / IOS-XE ===\nusername configbox privilege 15 secret YourPassword\ncrypto key generate rsa modulus 2048\nip ssh version 2\nline vty 0 4\n transport input ssh\n login local\n\n# === NX-OS (Nexus / MDS SAN Switch) ===\nrole name configbox-role\n  rule 1 permit show\n  rule 2 permit exec\nusername configbox role configbox-role password YourPassword',
       note: 'IOS/IOS-XE: Kullanıcı privilege 15 değilse enable şifresi gereklidir. NX-OS: MDS switch\'lerde varsayılan network-operator rolü yeterli olmayabilir — show + exec yetkili özel rol kullanın.',
     },
+    dell: {
+      protocol: 'SSH',
+      port: '22',
+      requirements: [
+        'Dell PowerConnect, Force10 veya OS6/OS10 switch',
+        'SSH servisi aktif',
+        'Read-only user (privilege 1) + enable şifresi (en az yetki için önerilen)',
+      ],
+      steps: [
+        'Switch üzerinde SSH aktif değilse aktif edin',
+        'Enable şifresi belirleyin — read-only user\'ın yetki yükseltmesini engeller',
+        'Privilege 1 (read-only) bir kullanıcı oluşturun',
+        'ConfigBox\'ta cihazı IP, port 22, SSH bilgileri ile birlikte enable şifresini de girin',
+      ],
+      commands: '# === Dell PowerConnect (önerilen: priv 1 + enable password) ===\nenable\nconfigure\nenable password YourEnablePassword\nusername configbox password YourPassword privilege 1\nip ssh server\nexit\ncopy running-config startup-config\n\n# === Dell Force10 (FTOS) ===\nconfigure\nenable password YourEnablePassword\nusername configbox password 0 YourPassword privilege 1\nip ssh server enable\nend\nwrite memory',
+      note: 'PowerConnect\'te "show running-config" privilege 15 gerektirir. ConfigBox enable şifresini otomatik göndererek priv 1\'den priv 15\'e yükseltir. Enable şifresi yoksa herkes elevate olabilir — düzgün yetki ayrımı için mutlaka belirleyin.',
+    },
+    extreme: {
+      protocol: 'SSH',
+      port: '22',
+      requirements: [
+        'Extreme Networks SLX router (SLX-OS)',
+        'SSH servisi aktif',
+        'running-config okuma yetkisine sahip kullanıcı',
+      ],
+      steps: [
+        'Router üzerinde SSH aktif değilse aktif edin',
+        'Built-in "user" rolü (read-only) ile bir kullanıcı oluşturun',
+        'ConfigBox sunucusundan SSH bağlantısını doğrulayın',
+        'ConfigBox\'ta cihazı IP, port 22, SSH kullanıcı adı ve şifresi ile ekleyin',
+      ],
+      commands: '# === Extreme SLX-OS ===\nconfigure terminal\nusername configbox role user password YourPassword\nexit\ncopy running-config startup-config',
+      note: 'ConfigBox config\'i çekmek için "terminal length 0" ardından "show running-config | nomore" çalıştırır. SLX-OS Brocade NOS\'tan evrildiği için syntax benzerdir.',
+    },
     brocade: {
       protocol: 'SSH',
       port: '22',

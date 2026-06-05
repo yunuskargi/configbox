@@ -135,6 +135,10 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 		configContent, fetchErr = vc.FetchCiscoConfig(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword, device.EnablePassword, device.Platform)
 	case "brocade":
 		configContent, fetchErr = vc.FetchBrocadeConfig(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword, device.EnablePassword)
+	case "dell":
+		configContent, fetchErr = vc.FetchDellConfig(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword, device.EnablePassword)
+	case "extreme":
+		configContent, fetchErr = vc.FetchExtremeConfig(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword, device.EnablePassword)
 	case "paloalto":
 		configContent, fetchErr = vc.FetchPaloAltoConfig(device.IPAddress, device.Port, device.AuthToken)
 	default:
@@ -203,6 +207,10 @@ func TestDeviceConnection(deviceID int) map[string]any {
 		err = vc.TestCisco(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword, device.EnablePassword, device.Platform)
 	case "brocade":
 		err = vc.TestBrocade(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword, device.EnablePassword)
+	case "dell":
+		err = vc.TestDell(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword, device.EnablePassword)
+	case "extreme":
+		err = vc.TestExtreme(device.IPAddress, device.Port, device.SSHUsername, device.SSHPassword, device.EnablePassword)
 	case "paloalto":
 		err = vc.TestPaloAlto(device.IPAddress, device.Port, device.AuthToken)
 	default:

@@ -105,7 +105,7 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validVendorsSet := map[string]bool{"fortigate": true, "juniper": true, "cisco": true, "brocade": true, "paloalto": true}
+	validVendorsSet := map[string]bool{"fortigate": true, "juniper": true, "cisco": true, "brocade": true, "dell": true, "extreme": true, "paloalto": true}
 	if !validVendorsSet[body.Vendor] {
 		writeError(w, 400, "Invalid vendor")
 		return
