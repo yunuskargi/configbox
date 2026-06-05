@@ -32,6 +32,36 @@ func sshConnect(host string, port int, username, password string, timeout time.D
 		// Network devices (routers, firewalls) use self-signed SSH keys with no PKI; host key verification is not feasible.
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         timeout,
+		// Allow legacy algorithms — older network devices (OpenSSH 6.x, legacy Juniper/Cisco) need them.
+		Config: ssh.Config{
+			KeyExchanges: []string{
+				"curve25519-sha256", "curve25519-sha256@libssh.org",
+				"ecdh-sha2-nistp256", "ecdh-sha2-nistp384", "ecdh-sha2-nistp521",
+				"diffie-hellman-group-exchange-sha256",
+				"diffie-hellman-group14-sha256", "diffie-hellman-group16-sha512",
+				"diffie-hellman-group14-sha1", "diffie-hellman-group1-sha1",
+				"diffie-hellman-group-exchange-sha1",
+			},
+			Ciphers: []string{
+				"aes128-gcm@openssh.com", "aes256-gcm@openssh.com",
+				"chacha20-poly1305@openssh.com",
+				"aes128-ctr", "aes192-ctr", "aes256-ctr",
+				"aes128-cbc", "3des-cbc",
+			},
+			MACs: []string{
+				"hmac-sha2-256-etm@openssh.com", "hmac-sha2-512-etm@openssh.com",
+				"hmac-sha2-256", "hmac-sha2-512",
+				"hmac-sha1", "hmac-sha1-96",
+			},
+		},
+		HostKeyAlgorithms: []string{
+			"ssh-ed25519",
+			"ecdsa-sha2-nistp256", "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp521",
+			"rsa-sha2-256", "rsa-sha2-512",
+			"ssh-rsa", "ssh-dss",
+		},
+		// Some old SSH servers reject the default "SSH-2.0-Go" version string.
+		ClientVersion: "SSH-2.0-OpenSSH_8.9",
 	}
 
 	addr := fmt.Sprintf("%s:%d", host, port)
