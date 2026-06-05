@@ -151,7 +151,7 @@ func sshRunInteractive(client *ssh.Client, commands []string, readTimeout time.D
 
 	for _, cmd := range commands {
 		fmt.Fprintf(stdinPipe, "%s\n", cmd)
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(1500 * time.Millisecond)
 	}
 
 	// Wait for output to settle (no new bytes for 3 seconds) before sending exit.
