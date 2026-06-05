@@ -9,7 +9,8 @@ import (
 // SLX-OS is the evolution of Brocade NOS (Extreme acquired Brocade's DC business in 2017).
 func FetchExtremeConfig(ip string, port int, username, password, enablePassword string) (string, error) {
 	// SLX-OS uses role-based access (admin/user) — no enable mode.
-	commands := []string{"terminal length 0", "show running-config | nomore"}
+	// "| nomore" pipe already disables pagination, no need for "terminal length 0".
+	commands := []string{"show running-config | nomore"}
 	_ = enablePassword
 
 	output, err := runSSHCommands(ip, port, username, password, commands, 60*time.Second, 120*time.Second)
