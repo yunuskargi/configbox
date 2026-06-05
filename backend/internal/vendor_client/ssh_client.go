@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/crypto/ssh"
@@ -137,6 +138,15 @@ func sshRunInteractive(client *ssh.Client, commands []string, readTimeout time.D
 		return "", err
 	}
 
+	// Use a mutex-protected buffer so we can safely read its length while the
+	// reader goroutine is writing to it (bytes.Buffer is NOT goroutine-safe).
+	output := &safeBuffer{}
+	done := make(chan struct{})
+	go func() {
+		io.Copy(output, stdoutPipe)
+		close(done)
+	}()
+
 	time.Sleep(1 * time.Second)
 
 	for _, cmd := range commands {
@@ -144,22 +154,62 @@ func sshRunInteractive(client *ssh.Client, commands []string, readTimeout time.D
 		time.Sleep(500 * time.Millisecond)
 	}
 
-	time.Sleep(2 * time.Second)
-	fmt.Fprintf(stdinPipe, "exit\n")
+	// Wait for output to settle (no new bytes for 3 seconds) before sending exit.
+	// This is critical for commands like "show running-config" that stream output
+	// for tens of seconds — sending exit too early would cut off the output.
+	settleDeadline := time.Now().Add(readTimeout)
+	prevLen := -1
+	stableTicks := 0
+	for {
+		if time.Now().After(settleDeadline) {
+			break
+		}
+		time.Sleep(1 * time.Second)
+		curLen := output.Len()
+		if curLen == prevLen {
+			stableTicks++
+			if stableTicks >= 3 {
+				break
+			}
+		} else {
+			stableTicks = 0
+			prevLen = curLen
+		}
+	}
 
-	done := make(chan struct{})
-	var output bytes.Buffer
-	go func() {
-		io.Copy(&output, stdoutPipe)
-		close(done)
-	}()
+	fmt.Fprintf(stdinPipe, "exit\n")
 
 	select {
 	case <-done:
-	case <-time.After(readTimeout):
+	case <-time.After(5 * time.Second):
 	}
 
 	return output.String(), nil
+}
+
+// safeBuffer is a goroutine-safe wrapper around bytes.Buffer for concurrent
+// read/write access in sshRunInteractive.
+type safeBuffer struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *safeBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *safeBuffer) Len() int {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Len()
+}
+
+func (b *safeBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
 }
 
 func cleanSSHOutput(output, command string) string {
