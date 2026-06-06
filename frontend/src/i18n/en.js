@@ -416,23 +416,6 @@ export default {
       commands: '# === IOS / IOS-XE ===\nusername configbox privilege 15 secret YourPassword\ncrypto key generate rsa modulus 2048\nip ssh version 2\nline vty 0 4\n transport input ssh\n login local\n\n# === NX-OS (Nexus / MDS SAN Switch) ===\nrole name configbox-role\n  rule 1 permit show\n  rule 2 permit exec\nusername configbox role configbox-role password YourPassword',
       note: 'IOS/IOS-XE: Enable password is required if the user does not have privilege 15. NX-OS: The default network-operator role may not be sufficient on MDS switches — use a custom role with show + exec permissions.',
     },
-    dell: {
-      protocol: 'SSH',
-      port: '22',
-      requirements: [
-        'Dell PowerConnect, Force10, or OS6/OS10 switch',
-        'SSH service enabled',
-        'Read-only user (privilege 1) + enable password (recommended for least privilege)',
-      ],
-      steps: [
-        'Enable SSH on the switch if not already enabled',
-        'Set an enable password — this prevents the read-only user from elevating',
-        'Create a privilege 1 (read-only) user',
-        'In ConfigBox, add the device with IP, port 22, SSH credentials AND the enable password',
-      ],
-      commands: '# === Dell PowerConnect (recommended: priv 1 + enable password) ===\nenable\nconfigure\nenable password YourEnablePassword\nusername configbox password YourPassword privilege 1\nip ssh server\nexit\ncopy running-config startup-config\n\n# === Dell Force10 (FTOS) ===\nconfigure\nenable password YourEnablePassword\nusername configbox password 0 YourPassword privilege 1\nip ssh server enable\nend\nwrite memory',
-      note: 'On PowerConnect, "show running-config" requires privilege 15. ConfigBox elevates from priv 1 to priv 15 by sending the enable password automatically. Without an enable password, any user can elevate freely — set one for proper separation.',
-    },
     extreme: {
       protocol: 'SSH',
       port: '22',

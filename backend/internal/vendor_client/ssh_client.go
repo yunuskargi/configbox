@@ -151,12 +151,12 @@ func sshRunInteractive(client *ssh.Client, commands []string, readTimeout time.D
 
 	for _, cmd := range commands {
 		fmt.Fprintf(stdinPipe, "%s\n", cmd)
-		time.Sleep(1500 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}
 
-	// Wait for output to settle (no new bytes for 10 seconds) before sending exit.
-	// Critical for "show running-config" on slow devices that may pause between
-	// config sections — sending exit too early would cut off the output.
+	// Wait for output to settle (no new bytes for 3 seconds) before sending exit.
+	// Critical for commands like "show running-config" that stream output for
+	// tens of seconds — sending exit too early would cut off the output.
 	settleDeadline := time.Now().Add(readTimeout)
 	prevLen := -1
 	stableTicks := 0
@@ -168,7 +168,7 @@ func sshRunInteractive(client *ssh.Client, commands []string, readTimeout time.D
 		curLen := output.Len()
 		if curLen == prevLen {
 			stableTicks++
-			if stableTicks >= 10 {
+			if stableTicks >= 3 {
 				break
 			}
 		} else {
