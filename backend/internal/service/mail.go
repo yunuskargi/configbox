@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pmezard/go-difflib/difflib"
 	"github.com/yunuskargi/configbox/internal/config"
 	"github.com/yunuskargi/configbox/internal/crypto"
 	"github.com/yunuskargi/configbox/internal/database"
@@ -413,7 +414,7 @@ func sendBatchedBackupEmail(items []pendingBackup, recipients string) {
 	}
 }
 
-func NotifyConfigChange(deviceName, vendor, location, vdom string) {
+func NotifyConfigChange(deviceName, vendor, location, vdom, previousConfig, newConfig string) {
 	notify := getNotifySettings()
 	if notify["notify_on_change"] != "true" {
 		return
@@ -425,13 +426,14 @@ func NotifyConfigChange(deviceName, vendor, location, vdom string) {
 
 	now := time.Now().In(config.AppTimezone).Format("02 Jan 2006, 15:04:05")
 
+	// Compute unified diff with 2 lines of context, ignoring noisy timestamp lines.
+	added, removed, diffHTML := renderDiffHTML(previousConfig, newConfig, vendor)
+
 	var content strings.Builder
 	content.WriteString(`<div style="background-color:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px 20px;margin-bottom:20px">
 <span style="font-size:20px;vertical-align:middle">⚠️</span>
 <span style="font-size:15px;font-weight:600;color:#92400e;margin-left:8px;vertical-align:middle">Configuration Change Detected</span>
 </div>`)
-
-	content.WriteString(`<p style="margin:0 0 16px;font-size:14px;color:#475569">A configuration change has been detected on the following device. The new configuration differs from the previous backup.</p>`)
 
 	content.WriteString(`<table width="100%" style="border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;margin-bottom:20px">`)
 	content.WriteString(infoRow("Device", deviceName, "#f8fafc"))
@@ -443,19 +445,96 @@ func NotifyConfigChange(deviceName, vendor, location, vdom string) {
 		content.WriteString(infoRow("VDOM", vdom, "#ffffff"))
 	}
 	content.WriteString(infoRow("Detected At", now, "#f8fafc"))
+	content.WriteString(infoRow("Lines Added", fmt.Sprintf("+%d", added), "#ffffff"))
+	content.WriteString(infoRow("Lines Removed", fmt.Sprintf("-%d", removed), "#f8fafc"))
 	content.WriteString(`</table>`)
 
-	content.WriteString(`<div style="background-color:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;padding:16px 20px">
-<p style="margin:0;font-size:13px;color:#0e7490">💡 <strong>Tip:</strong> Use the ConfigBox dashboard to compare configurations and view the exact changes using the diff viewer.</p>
+	if diffHTML != "" {
+		content.WriteString(`<p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.5px">Diff Preview</p>`)
+		content.WriteString(diffHTML)
+	}
+
+	content.WriteString(`<div style="background-color:#ecfeff;border:1px solid #a5f3fc;border-radius:8px;padding:16px 20px;margin-top:16px">
+<p style="margin:0;font-size:13px;color:#0e7490">💡 <strong>Tip:</strong> Open ConfigBox to view the full diff in the dashboard.</p>
 </div>`)
 
 	title := fmt.Sprintf("Config Change - %s", deviceName)
-	subject := fmt.Sprintf("ConfigBox - %s - Configuration Changed", deviceName)
+	subject := fmt.Sprintf("ConfigBox - %s - Configuration Changed (+%d/-%d)", deviceName, added, removed)
 	body := mailWrapper(title, content.String())
 
 	if err := sendEmail(recipients, subject, body); err != nil {
 		slog.Error("failed to send config change notification", "error", err)
 	}
+}
+
+// renderDiffHTML returns (added, removed, html). The HTML shows up to 100 diff
+// lines (truncated with notice if longer) in a code-block style with green/red.
+func renderDiffHTML(prev, curr, vendor string) (int, int, string) {
+	if prev == "" {
+		return 0, 0, ""
+	}
+
+	diff := difflib.UnifiedDiff{
+		A:        difflib.SplitLines(prev),
+		B:        difflib.SplitLines(curr),
+		FromFile: "previous",
+		ToFile:   "current",
+		Context:  2,
+	}
+	text, err := difflib.GetUnifiedDiffString(diff)
+	if err != nil || text == "" {
+		return 0, 0, ""
+	}
+
+	added, removed := 0, 0
+	const maxLines = 100
+	const maxBytes = 50000
+	var lines []string
+	truncated := false
+	for _, line := range strings.Split(strings.TrimRight(text, "\n"), "\n") {
+		if strings.HasPrefix(line, "+++") || strings.HasPrefix(line, "---") {
+			continue
+		}
+		if strings.HasPrefix(line, "+") {
+			added++
+		} else if strings.HasPrefix(line, "-") {
+			removed++
+		}
+		if len(lines) >= maxLines {
+			truncated = true
+			continue
+		}
+		lines = append(lines, line)
+	}
+
+	var b strings.Builder
+	b.WriteString(`<div style="background-color:#0f172a;border-radius:8px;padding:16px;margin-bottom:8px;font-family:'SF Mono','Monaco','Consolas',monospace;font-size:12px;line-height:1.6;overflow-x:auto;color:#e2e8f0">`)
+	total := 0
+	for _, l := range lines {
+		color := "#94a3b8"
+		bg := ""
+		if strings.HasPrefix(l, "+") && !strings.HasPrefix(l, "+++") {
+			color = "#86efac"
+			bg = "background-color:rgba(34,197,94,0.15);"
+		} else if strings.HasPrefix(l, "-") && !strings.HasPrefix(l, "---") {
+			color = "#fca5a5"
+			bg = "background-color:rgba(239,68,68,0.15);"
+		} else if strings.HasPrefix(l, "@@") {
+			color = "#67e8f9"
+		}
+		b.WriteString(fmt.Sprintf(`<div style="%scolor:%s;white-space:pre">%s</div>`, bg, color, html.EscapeString(l)))
+		total += len(l)
+		if total > maxBytes {
+			truncated = true
+			break
+		}
+	}
+	if truncated {
+		b.WriteString(`<div style="color:#fbbf24;margin-top:8px;font-style:italic">... diff truncated. Open the dashboard to view full changes.</div>`)
+	}
+	b.WriteString(`</div>`)
+	_ = vendor
+	return added, removed, b.String()
 }
 
 func SendDailySummary() {

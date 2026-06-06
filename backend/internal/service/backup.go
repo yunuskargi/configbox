@@ -99,7 +99,12 @@ func normalizeConfig(content, vendor string) string {
 			if strings.HasPrefix(trimmed, "! Last configuration change") ||
 				strings.HasPrefix(trimmed, "! NVRAM config last updated") ||
 				strings.HasPrefix(trimmed, "ntp clock-period") ||
-				strings.HasPrefix(trimmed, "! No configuration change since") {
+				strings.HasPrefix(trimmed, "! No configuration change since") ||
+				strings.HasPrefix(trimmed, "!Time:") ||
+				strings.HasPrefix(trimmed, "!Running configuration last done at") ||
+				strings.HasPrefix(trimmed, "!Startup-config last updated at") ||
+				strings.HasPrefix(trimmed, "!Time stamp") ||
+				strings.HasPrefix(trimmed, "! Time:") {
 				skip = true
 			}
 		case "juniper":
@@ -185,7 +190,7 @@ func RunBackup(deviceID int, triggeredBy string) map[string]any {
 		slog.Info("sending backup notification email", "device", device.Name, "status", "success")
 		NotifyBackup(device.Name, device.Vendor, "success", "", filePath, fileSize, device.LocationName, device.Vdom, triggeredBy, remote)
 		if configChanged {
-			NotifyConfigChange(device.Name, device.Vendor, device.LocationName, device.Vdom)
+			NotifyConfigChange(device.Name, device.Vendor, device.LocationName, device.Vdom, previousConfig, configContent)
 		}
 	}()
 
