@@ -469,14 +469,19 @@ func NotifyConfigChange(deviceName, vendor, location, vdom, previousConfig, newC
 
 // renderDiffHTML returns (added, removed, html). The HTML shows up to 100 diff
 // lines (truncated with notice if longer) in a code-block style with green/red.
+// Inputs are filtered through normalizeConfig to hide noise (timestamps, etc.)
+// so the mail diff matches what triggered the change detection.
 func renderDiffHTML(prev, curr, vendor string) (int, int, string) {
 	if prev == "" {
 		return 0, 0, ""
 	}
 
+	prevClean := normalizeConfig(prev, vendor)
+	currClean := normalizeConfig(curr, vendor)
+
 	diff := difflib.UnifiedDiff{
-		A:        difflib.SplitLines(prev),
-		B:        difflib.SplitLines(curr),
+		A:        difflib.SplitLines(prevClean),
+		B:        difflib.SplitLines(currClean),
 		FromFile: "previous",
 		ToFile:   "current",
 		Context:  2,
@@ -533,7 +538,6 @@ func renderDiffHTML(prev, curr, vendor string) (int, int, string) {
 		b.WriteString(`<div style="color:#fbbf24;margin-top:8px;font-style:italic">... diff truncated. Open the dashboard to view full changes.</div>`)
 	}
 	b.WriteString(`</div>`)
-	_ = vendor
 	return added, removed, b.String()
 }
 
