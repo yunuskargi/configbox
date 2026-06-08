@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import api from '../api/client';
 import { useLang } from '../context/LangContext';
-import { Plus, Play, Pencil, Trash2, Wifi, Clock, X, MapPin, Upload, Download, FileSpreadsheet, CheckCircle, XCircle, Loader2, BookOpen } from 'lucide-react';
+import { Plus, Play, Pencil, Trash2, Wifi, Clock, X, MapPin, Upload, Download, FileSpreadsheet, CheckCircle, XCircle, Loader2, BookOpen, Copy } from 'lucide-react';
 
 const vendorDefaults = { fortigate: { port: 443 }, juniper: { port: 22 }, cisco: { port: 22 }, brocade: { port: 22 }, extreme: { port: 22 }, paloalto: { port: 443 } };
 const ciscoPlatforms = { ios: 'IOS / IOS-XE', nxos: 'NX-OS (Nexus)', asa: 'ASA (Firewall)' };
@@ -238,6 +238,58 @@ function DeviceModal({ device, onClose, onSaved, t }) {
           </div>
         </form>
       </div>
+    </div>
+  );
+}
+
+function CloneModal({ device, onClose, onCloned, t }) {
+  const [name, setName] = useState(`${device.name}-copy`);
+  const [ip, setIP] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      await api.post(`/devices/${device.id}/clone`, { name: name.trim(), ip_address: ip.trim() });
+      onCloned(t.dev_cloned || 'Device cloned');
+    } catch (err) {
+      setError(err.response?.data?.detail || t.error_occurred);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-xl w-full max-w-md">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800">{t.dev_clone_title || 'Clone Device'}</h2>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        </div>
+        <div className="px-6 py-4 space-y-4">
+          <p className="text-sm text-gray-600">
+            {(t.dev_clone_desc && t.dev_clone_desc(device.name)) || `Clone "${device.name}" with the same vendor, port, credentials, and platform. Provide a new name and IP address.`}
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_name}</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.dev_ip}</label>
+            <input value={ip} onChange={(e) => setIP(e.target.value)} required placeholder="192.168.1.1" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+          </div>
+          {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
+        </div>
+        <div className="px-6 py-3 border-t border-gray-100 flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200">{t.cancel}</button>
+          <button type="submit" disabled={saving} className="px-4 py-2 bg-cyan-600 text-white text-sm rounded-lg hover:bg-cyan-700 disabled:opacity-50">
+            {saving ? t.saving : (t.dev_clone || 'Clone')}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
@@ -539,6 +591,7 @@ export default function Devices() {
   const locale = lang === 'tr' ? 'tr-TR' : 'en-US';
   const [devices, setDevices] = useState([]);
   const [showModal, setShowModal] = useState(null);
+  const [cloneTarget, setCloneTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [backingUp, setBackingUp] = useState(null);
   const [testing, setTesting] = useState(null);
@@ -738,6 +791,9 @@ export default function Devices() {
                     <button onClick={() => setShowModal(d)} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-cyan-600" title={t.dev_edit}>
                       <Pencil size={16} />
                     </button>
+                    <button onClick={() => setCloneTarget(d)} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-cyan-600" title={t.dev_clone || 'Clone'}>
+                      <Copy size={16} />
+                    </button>
                     <button onClick={() => setDeleteTarget(d)} className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-red-600" title={t.dev_delete_remove}>
                       <Trash2 size={16} />
                     </button>
@@ -753,6 +809,7 @@ export default function Devices() {
       </div>
 
       {showModal && <DeviceModal device={showModal.id ? showModal : null} onClose={() => setShowModal(null)} onSaved={(msg) => { setShowModal(null); load(); if (msg) showToast(msg, 'success'); }} t={t} />}
+      {cloneTarget && <CloneModal device={cloneTarget} onClose={() => setCloneTarget(null)} onCloned={(msg) => { setCloneTarget(null); load(); if (msg) showToast(msg, 'success'); }} t={t} />}
       {deleteTarget && <DeleteModal device={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={(msg, type) => { setDeleteTarget(null); load(); if (msg) showToast(msg, type || 'success'); }} t={t} />}
       {showBulkImport && <BulkImportModal onClose={() => setShowBulkImport(false)} onImported={load} t={t} />}
       {showGuide && <VendorGuide onClose={() => setShowGuide(false)} t={t} />}

@@ -236,6 +236,72 @@ func UpdateDevice(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, enrichDevice(id))
 }
 
+func CloneDevice(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUser(r)
+	sourceID := paramInt(r, "id")
+
+	var body struct {
+		Name      string `json:"name"`
+		IPAddress string `json:"ip_address"`
+	}
+	if err := decodeBody(r, &body); err != nil {
+		writeError(w, 400, "Invalid request body")
+		return
+	}
+	body.Name = strings.TrimSpace(body.Name)
+	body.IPAddress = strings.TrimSpace(body.IPAddress)
+
+	validName := regexp.MustCompile(`^[a-zA-Z0-9._\-\s]{1,64}$`)
+	if !validName.MatchString(body.Name) {
+		writeError(w, 400, "Invalid device name. Use letters, numbers, dots, hyphens, underscores (max 64 chars)")
+		return
+	}
+	if body.IPAddress == "" {
+		writeError(w, 400, "IP address is required")
+		return
+	}
+
+	var nameExists int
+	database.DB.Get(&nameExists, "SELECT COUNT(*) FROM devices WHERE name = ?", body.Name)
+	if nameExists > 0 {
+		writeError(w, 400, "Device name already exists")
+		return
+	}
+
+	// Load source with credentials already encrypted in DB — we copy them as-is.
+	var source struct {
+		Vendor         string  `db:"vendor"`
+		Port           int     `db:"port"`
+		LocationID     *int    `db:"location_id"`
+		Vdom           *string `db:"vdom"`
+		AuthToken      *string `db:"auth_token"`
+		SSHUsername    *string `db:"ssh_username"`
+		SSHPassword    *string `db:"ssh_password"`
+		EnablePassword *string `db:"enable_password"`
+		Platform       string  `db:"platform"`
+	}
+	err := database.DB.Get(&source, `SELECT vendor, port, location_id, vdom, auth_token,
+		ssh_username, ssh_password, enable_password, platform FROM devices WHERE id = ?`, sourceID)
+	if err != nil {
+		writeError(w, 404, "Source device not found")
+		return
+	}
+
+	// Insert new device — credentials are copied verbatim (already encrypted).
+	res, _ := database.DB.Exec(`INSERT INTO devices (name, vendor, ip_address, port, location_id, vdom, auth_token, ssh_username, ssh_password, enable_password, platform, is_active, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+		body.Name, source.Vendor, body.IPAddress, source.Port, source.LocationID, source.Vdom,
+		source.AuthToken, source.SSHUsername, source.SSHPassword, source.EnablePassword,
+		source.Platform, config.Now(), config.Now())
+
+	id, _ := res.LastInsertId()
+	uid := user.ID
+	service.LogAction(&uid, user.Username, "clone", "device", body.Name,
+		fmt.Sprintf("Cloned from device ID %d (IP: %s)", sourceID, body.IPAddress), clientIP(r))
+
+	writeJSON(w, 201, enrichDevice(int(id)))
+}
+
 func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetUser(r)
 	id := paramInt(r, "id")

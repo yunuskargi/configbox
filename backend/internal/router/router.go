@@ -64,6 +64,7 @@ func New() http.Handler {
 			r.Delete("/{id}", handler.DeleteDevice)
 			r.Post("/{id}/backup", handler.TriggerBackup)
 			r.Post("/{id}/test", handler.TestConnection)
+			r.Post("/{id}/clone", handler.CloneDevice)
 			r.Put("/{id}/schedule", handler.SetSchedule)
 			r.Delete("/{id}/schedule", handler.RemoveSchedule)
 		})
