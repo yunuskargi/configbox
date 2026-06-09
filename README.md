@@ -4,7 +4,7 @@
 
 ### Modern, open-source network configuration backup manager
 
-Automated config backups for FortiGate, Cisco, Juniper & Palo Alto — with a clean web UI, diff viewer, scheduling, and Docker deployment in minutes.
+Automated config backups for FortiGate, Cisco, Juniper, Palo Alto, Brocade & Extreme — with a clean web UI, diff viewer, scheduling, and Docker deployment in minutes.
 
 A free alternative to **RANCID**, **Oxidized**, and **SolarWinds NCM**.
 
@@ -32,6 +32,8 @@ ConfigBox aims to make network configuration backups straightforward for small t
 | **FortiGate** | REST API | Config backup via `/api/v2/monitor/system/config/backup` |
 | **Juniper** | SSH | `show configuration | display set` |
 | **Cisco** (IOS/NX-OS/ASA) | SSH | `show running-config` |
+| **Brocade** (VDX/ICX/MLX) | SSH | `show running-config | nomore` |
+| **Extreme Networks** (SLX) | SSH | `show running-config | nomore` |
 | **Palo Alto** | PAN-OS XML API | Config export via XML API |
 
 ## Features
@@ -44,6 +46,7 @@ ConfigBox aims to make network configuration backups straightforward for small t
 - **Automatic archival** — gzip compression of old backups to save disk
 - **Plain file storage** — even if the app stops, configs are readable in `backups/`
 - **CSV bulk import** — onboard hundreds of devices in seconds
+- **Clone devices** — duplicate an existing device's settings & credentials in one click
 
 ### 🔐 Security
 - **Two-factor authentication (TOTP)** for all users
@@ -57,15 +60,19 @@ ConfigBox aims to make network configuration backups straightforward for small t
 ### 📊 Monitoring & Notifications
 - **Dashboard** with statistics, trend charts, recent activity
 - **Email notifications** — success / failure / config change / daily summary
+- **Batched summary emails** — multiple backup results within a 3-minute window are combined into one email instead of N
+- **Config change emails include the diff** — see exactly what changed without opening the dashboard
+- **Smart noise filtering** — timestamps and other auto-changing lines are ignored, no false-positive alerts
 - **Location-based device grouping** with filtering
 - **Vendor + location filters** on the device list
 
 ### 🌐 Platform & UX
-- **Multi-vendor support** — FortiGate, Cisco (IOS/NX-OS/ASA), Juniper, Palo Alto
+- **Multi-vendor support** — FortiGate, Cisco (IOS/NX-OS/ASA), Juniper, Palo Alto, Brocade, Extreme
+- **Legacy device compatibility** — automatic openssh fallback for older SSH servers
 - **Dark mode** / light mode
 - **Multi-language UI** — English & Turkish
 - **Modern web UI** built with React + Tailwind
-- **Lightweight** — ~30 MB Docker image, single Go binary
+- **Lightweight** — single Go binary, slim Docker image
 - **Self-hosted** — your configs never leave your infrastructure
 
 ## Quick Start
@@ -119,6 +126,8 @@ backups/
 │       └── 2024-01-16_020000.conf
 ├── juniper/
 ├── cisco/
+├── brocade/
+├── extreme/
 └── paloalto/
 ```
 
