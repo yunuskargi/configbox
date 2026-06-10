@@ -3,6 +3,15 @@ import api from '../api/client';
 import { Download, Trash2, Copy, CheckCircle, XCircle, Lock, X, GitCompare, Plus, Minus, Loader2 } from 'lucide-react';
 import { useLang } from '../context/LangContext';
 
+const VENDOR_META = {
+  fortigate: { name: 'FortiGate', badge: 'bg-orange-100 text-orange-700' },
+  juniper: { name: 'Juniper', badge: 'bg-teal-100 text-teal-700' },
+  cisco: { name: 'Cisco', badge: 'bg-indigo-100 text-indigo-700' },
+  brocade: { name: 'Brocade', badge: 'bg-purple-100 text-purple-700' },
+  extreme: { name: 'Extreme', badge: 'bg-emerald-100 text-emerald-700' },
+  paloalto: { name: 'Palo Alto', badge: 'bg-red-100 text-red-700' },
+};
+
 function DiffModal({ backupA, backupB, onClose, t, locale }) {
   const [diff, setDiff] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -228,10 +237,7 @@ export default function Backups() {
         </select>
         <select value={filters.vendor} onChange={(e) => setFilters((f) => ({ ...f, vendor: e.target.value }))} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500">
           <option value="">{t.bak_all_vendors}</option>
-          <option value="fortigate">FortiGate</option>
-          <option value="juniper">Juniper</option>
-          <option value="cisco">Cisco</option>
-          <option value="paloalto">Palo Alto</option>
+          {Object.entries(VENDOR_META).map(([id, v]) => <option key={id} value={id}>{v.name}</option>)}
         </select>
         <select value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))} className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500">
           <option value="">{t.bak_all_statuses}</option>
@@ -280,8 +286,8 @@ export default function Backups() {
                 )}
                 <td className="px-4 py-3 font-medium text-gray-800">{b.device_name}</td>
                 <td className="px-4 py-3">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${b.vendor === 'fortigate' ? 'bg-orange-100 text-orange-700' : b.vendor === 'cisco' ? 'bg-indigo-100 text-indigo-700' : b.vendor === 'paloalto' ? 'bg-red-100 text-red-700' : 'bg-teal-100 text-teal-700'}`}>
-                    {b.vendor === 'fortigate' ? 'FortiGate' : b.vendor === 'cisco' ? 'Cisco' : b.vendor === 'paloalto' ? 'Palo Alto' : 'Juniper'}
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${VENDOR_META[b.vendor]?.badge || 'bg-gray-100 text-gray-700'}`}>
+                    {VENDOR_META[b.vendor]?.name || b.vendor}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-gray-600 text-xs">{new Date(b.created_at).toLocaleString(locale)}</td>
