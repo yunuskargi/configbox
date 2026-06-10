@@ -356,6 +356,9 @@ export default {
 
   // Vendor Guide
   guide_title: 'Setup Guide',
+  guide_subtitle: 'Step-by-step device configuration',
+  copy: 'Copy',
+  copied: 'Copied',
   guide_protocol: 'Protocol',
   guide_port: 'Default Port',
   guide_requirements: 'Requirements',

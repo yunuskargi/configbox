@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Server, Database, Settings, ChevronLeft, ChevronRight, LogOut, Box, MapPin, Users, Mail, Shield, Moon, Sun, Globe, CloudUpload } from 'lucide-react';
+import { LayoutDashboard, Server, Database, Settings, ChevronLeft, ChevronRight, LogOut, Box, MapPin, Users, Mail, Shield, Moon, Sun, Globe, CloudUpload, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBranding } from '../context/BrandingContext';
@@ -79,7 +79,17 @@ export default function Sidebar() {
           <LogOut size={20} className="shrink-0" />
           {!collapsed && <span>{t.sidebar_logout}</span>}
         </button>
-        {!collapsed && <p className="text-[10px] text-gray-300 dark:text-gray-600 text-center mt-2">ConfigBox v1.0</p>}
+        {!collapsed && (
+          <a
+            href="https://github.com/yunuskargi/configbox"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1 text-[11px] font-medium text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 hover:underline mt-2 transition"
+          >
+            <span>GitHub</span>
+            <ExternalLink size={10} />
+          </a>
+        )}
       </div>
     </aside>
   );

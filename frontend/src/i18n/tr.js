@@ -356,6 +356,9 @@ export default {
 
   // Vendor Guide
   guide_title: 'Kurulum Rehberi',
+  guide_subtitle: 'Adım adım cihaz konfigürasyonu',
+  copy: 'Kopyala',
+  copied: 'Kopyalandı',
   guide_protocol: 'Protokol',
   guide_port: 'Varsayılan Port',
   guide_requirements: 'Gereksinimler',
